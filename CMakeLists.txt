@@ -49,7 +49,7 @@ if(YOCTO_OPENGL)
     add_library(yocto_gl lib/yocto/yocto_gl.h lib/yocto/yocto_gl.cpp lib/yocto/ext/stb_image.cpp lib/yocto/ext/nanosvg.cpp lib/yocto/ext/imgui/imgui.cpp lib/yocto/ext/imgui/imgui_draw.cpp lib/yocto/ext/imgui/imgui_impl_glfw_gl3.cpp lib/yocto/ext/imgui/imgui_extra_fonts.cpp)
     target_link_libraries(yocto_gl ${OPENGL_gl_LIBRARY} ${GLFW_LIBRARY} ${GLEW_LIBRARIES} ${X11_LIBRARIES} X11 Xxf86vm Xrandr GL GLU Xi dl Xinerama rt GLEW m Xcursor)
 else(YOCTO_OPENGL)
-    add_library(lib/yocto_gl yocto/yocto_gl.h lib/yocto/yocto_gl.cpp lib/yocto/ext/stb_image.cpp lib/yocto/ext/nanosvg.cpp)
+    add_library(yocto_gl lib/yocto/yocto_gl.h lib/yocto/yocto_gl.cpp lib/yocto/ext/stb_image.cpp lib/yocto/ext/nanosvg.cpp)
 endif(YOCTO_OPENGL)
 
 if(UNIX AND NOT APPLE)
