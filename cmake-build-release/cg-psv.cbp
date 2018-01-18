@@ -2,7 +2,7 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6"/>
 	<Project>
-		<Option title="yocto-gl"/>
+		<Option title="cg-psv"/>
 		<Option makefile_is_custom="1"/>
 		<Option compiler="gcc"/>
 		<Option virtualFolders="CMake Files\;"/>
@@ -134,6 +134,42 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/ext/imgui/imgui.cpp">
+			<Option target="yocto_gl"/>
+		</Unit>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/ext/imgui/imgui.h">
+			<Option target="yocto_gl"/>
+		</Unit>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/ext/imgui/imgui_draw.cpp">
+			<Option target="yocto_gl"/>
+		</Unit>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/ext/imgui/imgui_extra_fonts.cpp">
+			<Option target="yocto_gl"/>
+		</Unit>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/ext/imgui/imgui_impl_glfw_gl3.cpp">
+			<Option target="yocto_gl"/>
+		</Unit>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/ext/imgui/imgui_impl_glfw_gl3.h">
+			<Option target="yocto_gl"/>
+		</Unit>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/ext/nanosvg.cpp">
+			<Option target="yocto_gl"/>
+		</Unit>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/ext/nanosvg.h">
+			<Option target="yocto_gl"/>
+		</Unit>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/ext/stb_image.cpp">
+			<Option target="yocto_gl"/>
+		</Unit>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/ext/stb_image.h">
+			<Option target="yocto_gl"/>
+		</Unit>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/yocto_gl.cpp">
+			<Option target="yocto_gl"/>
+		</Unit>
+		<Unit filename="/home/dsforza/CLionProjects/cg-psv/lib/yocto/yocto_gl.h">
+			<Option target="yocto_gl"/>
+		</Unit>
 		<Unit filename="/home/dsforza/CLionProjects/cg-psv/src/main.cpp">
 			<Option target="main"/>
 		</Unit>
