@@ -1,5 +1,5 @@
-#include "../lib/yocto/yocto_gl.h"
-#include "../lib/yocto/yocto_gl.cpp"
+#include "../src/yocto/yocto_gl.h"
+#include "../src/yocto/yocto_gl.cpp"
 
 using namespace ygl;
 
