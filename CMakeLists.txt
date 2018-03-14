@@ -22,41 +22,26 @@ if(MSVC)
     add_definitions(/D_CRT_SECURE_NO_WARNINGS /wd4018 /wd4244 /wd4305 /wd4800 /wd4267)
     set(CMAKE_CXX_FLAGS "/EHsc")
 endif(MSVC)
-if(YOCTO_OPENGL)
-    add_definitions(-DYGL_OPENGL=1)
-else(YOCTO_OPENGL)
-    add_definitions(-DYGL_OPENGL=0)
-endif(YOCTO_OPENGL)
+add_definitions(-DYGL_OPENGL=0)
 
-if(YOCTO_OPENGL)
-    find_package(OpenGL REQUIRED)
-    if(APPLE)
-        include_directories(/usr/local/include)
-        link_directories(/usr/local/lib)
-        find_library(GLFW_LIBRARY NAMES glfw3 glfw PATHS /usr/local/lib)
-    endif(APPLE)
-    if(WIN32)
-        include_directories(${CMAKE_SOURCE_DIR}/apps/w32/include)
-        link_directories(${CMAKE_SOURCE_DIR}/apps/w32/lib-vc2015)
-        find_library(GLEW_LIBRARIES NAMES glew32 PATHS ${CMAKE_SOURCE_DIR}/apps/w32/lib-vc2015)
-        find_library(GLFW_LIBRARY NAMES glfw3dll PATHS ${CMAKE_SOURCE_DIR}/apps/w32/lib-vc2015)
-    endif(WIN32)
-    if(UNIX AND NOT APPLE)
-        include_directories(/usr/include /usr/local/include)
-        find_library(GLFW_LIBRARY NAMES glfw3 glfw PATHS /usr/lib /usr/local/lib64 /usr/lib64 /usr/local/lib /usr/lib/x86_64-linux-gnu)
-        find_package(GLEW REQUIRED)
-    endif(UNIX AND NOT APPLE)
-    add_library(yocto_gl src/yocto/yocto_gl.h src/yocto/yocto_gl.cpp src/yocto/ext/stb_image.cpp src/yocto/ext/nanosvg.cpp src/yocto/ext/imgui/imgui.cpp src/yocto/ext/imgui/imgui_draw.cpp src/yocto/ext/imgui/imgui_impl_glfw_gl3.cpp src/yocto/ext/imgui/imgui_extra_fonts.cpp)
-    target_link_libraries(yocto_gl ${OPENGL_gl_LIBRARY} ${GLFW_LIBRARY} ${GLEW_LIBRARIES} ${X11_LIBRARIES} X11 Xxf86vm Xrandr GL GLU Xi dl Xinerama rt GLEW m Xcursor)
-else(YOCTO_OPENGL)
-    add_library(yocto_gl src/yocto/yocto_gl.h src/yocto/yocto_gl.cpp src/yocto/ext/stb_image.cpp src/yocto/ext/nanosvg.cpp)
-endif(YOCTO_OPENGL)
+add_library(yocto_gl src/yocto/yocto_gl.h src/yocto/yocto_gl.cpp src/yocto/ext/stb_image.cpp src/yocto/ext/nanosvg.cpp)
 
 if(UNIX AND NOT APPLE)
     find_package(Threads REQUIRED)
     target_link_libraries(yocto_gl Threads::Threads)
 endif(UNIX AND NOT APPLE)
 
+add_library(voro++ src/voro++-0.4.6/src/voro++.hh src/voro++-0.4.6/src/c_loops.hh src/voro++-0.4.6/src/cell.hh
+        src/voro++-0.4.6/src/common.hh src/voro++-0.4.6/src/config.hh src/voro++-0.4.6/src/container.hh
+        src/voro++-0.4.6/src/container_prd.hh src/voro++-0.4.6/src/rad_option.hh src/voro++-0.4.6/src/pre_container.hh
+        src/voro++-0.4.6/src/unitcell.hh src/voro++-0.4.6/src/v_base.hh src/voro++-0.4.6/src/v_compute.hh
+        src/voro++-0.4.6/src/wall.hh src/voro++-0.4.6/src/worklist.hh src/voro++-0.4.6/src/voro++.cc
+        src/voro++-0.4.6/src/c_loops.cc src/voro++-0.4.6/src/cell.cc src/voro++-0.4.6/src/common.cc
+        src/voro++-0.4.6/src/container.cc src/voro++-0.4.6/src/container_prd.cc src/voro++-0.4.6/src/pre_container.cc
+        src/voro++-0.4.6/src/unitcell.cc src/voro++-0.4.6/src/v_base.cc src/voro++-0.4.6/src/v_compute.cc
+        src/voro++-0.4.6/src/wall.cc)
+set_target_properties(voro++ PROPERTIES LINKER_LANGUAGE CXX)
+
 add_executable(main src/main.cpp)
 
-target_link_libraries(main yocto_gl)
+target_link_libraries(main yocto_gl voro++)
