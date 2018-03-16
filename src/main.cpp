@@ -36,11 +36,11 @@ void grow();
 
 int main()
 {
-    auto N = 12000;
+    auto N = 1000;
     auto iter_num = 10;
-    auto D = 0.1f;
+    auto D = 1.0f;
     auto dk = D * 2;
-    auto di = D * 17;
+    auto di = D * 7;
     auto p0 = vec2f{0, 0};
     auto p1 = vec2f{1, 0};
     auto t0 = vec2f{0.6, 0.2};
@@ -61,6 +61,7 @@ int main()
     auto nodes_loop = voro::c_loop_all(voro_nodes);
 
     auto dead_attr = std::unordered_set<int>();
+    auto new_nodes = std::vector<vec3f>();
 
     auto x = 0.0, y = 0.0, z = 0.0;
     for (auto i = 0; i < iter_num; i++)
@@ -93,7 +94,7 @@ int main()
                     } while (attr_loop.inc());
 
                 auto new_node = node + D * sum;
-                voro_nodes.put(node_id++, new_node.x, new_node.y, new_node.z);
+                new_nodes.push_back(new_node);
 
                 attr_loop.setup_sphere(new_node.x, new_node.y, new_node.z, dk, true);
                 if (attr_loop.start())
@@ -104,6 +105,13 @@ int main()
                     } while (attr_loop.inc());
 
             } while (nodes_loop.inc());
+
+            while (!new_nodes.empty())
+            {
+                auto new_node = new_nodes.back();
+                new_nodes.pop_back();
+                voro_nodes.put(node_id++, new_node.x, new_node.y, new_node.z);
+            }
     }
 
     nodes_loop.start();
