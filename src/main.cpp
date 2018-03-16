@@ -36,11 +36,11 @@ void grow();
 
 int main()
 {
-    auto N = 1000;
-    auto iter_num = 10;
-    auto D = 1.0f;
+    auto N = 10;
+    auto iter_num = 100;
+    auto D = 0.1f;
     auto dk = D * 2;
-    auto di = D * 7;
+    auto di = D * 17;
     auto p0 = vec2f{0, 0};
     auto p1 = vec2f{1, 0};
     auto t0 = vec2f{0.6, 0.2};
@@ -53,7 +53,7 @@ int main()
     auto reder = 0.0;
 
     auto voro_attr = throw_darts(N, p0, p1, t0, t1);
-    auto attr_loop = voro::c_loop_subset(voro_attr);
+    auto attr_loop = voro::c_loop_subset(voro_attr);    
 
     auto voro_nodes = voro::container(voro_attr.ax, voro_attr.bx, min(voro_attr.ay, -0.02f), voro_attr.by,
                                       voro_attr.az, voro_attr.bz, N / 5, N / 5, N / 5, false, false, false, 8);
@@ -64,6 +64,7 @@ int main()
     auto new_nodes = std::vector<vec3f>();
 
     auto x = 0.0, y = 0.0, z = 0.0;
+
     for (auto i = 0; i < iter_num; i++)
     {
         if (nodes_loop.start())
@@ -74,7 +75,8 @@ int main()
 
                 attr_loop.setup_sphere(node.x, node.y, node.z, di, true);
 
-                auto sum = vec3f {0, 0, 0};
+                auto sum = vec3f{0, 0, 0};
+                auto summed = false;
 
                 if (attr_loop.start())
                     do
@@ -84,19 +86,28 @@ int main()
                         if (dead_attr.count(attr_id))
                             continue;
 
-                        voro_nodes.find_voronoi_cell(x, y, z, x, y, z, search_id);
+                        auto attr = vec3f{(float) x, (float) y, (float) z};
+
+                        voro_nodes.find_voronoi_cell(attr.x, attr.y, attr.z, x, y, z, search_id);
 
                         if (search_id != node_id)
                             continue;
 
-                        auto attr = vec3f {(float) x, (float) y, (float) z};
                         sum += normalize(attr - node);
+                        summed = true;
                     } while (attr_loop.inc());
 
-                auto new_node = node + D * sum;
-                new_nodes.push_back(new_node);
+                if (summed)
+                    new_nodes.push_back(node + D * sum);
+            } while (nodes_loop.inc());
+
+            while (!new_nodes.empty())
+            {
+                auto new_node = new_nodes.back();
+                voro_nodes.put(nodes_id++, new_node.x, new_node.y, new_node.z);
 
                 attr_loop.setup_sphere(new_node.x, new_node.y, new_node.z, dk, true);
+
                 if (attr_loop.start())
                     do
                     {
@@ -104,13 +115,7 @@ int main()
                         dead_attr.insert(attr_id);
                     } while (attr_loop.inc());
 
-            } while (nodes_loop.inc());
-
-            while (!new_nodes.empty())
-            {
-                auto new_node = new_nodes.back();
                 new_nodes.pop_back();
-                voro_nodes.put(node_id++, new_node.x, new_node.y, new_node.z);
             }
     }
 
