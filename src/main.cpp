@@ -46,24 +46,22 @@ int main()
     auto t1 = vec2f{0.1, 0.4};
     auto root = vec3f{0, 0, 0};
 
-    // vec2f x = eval_bezier_cubic(p1, t1, p0, t0, 0); py confronto
 
     auto vorodiag = throw_darts(N, p0, p1, t0, t1);
     auto voroloop = voro::c_loop_subset(vorodiag);
 
     for (auto i = 0; i < iter_num; i++)
     {
-        //auto pid = 0;
         auto x = 0.0, y = 0.0, z = 0.0;
-        //vorodiag->find_voronoi_cell(root.x, root.y, root.z, x, y, z, pid);
 
         voroloop.setup_sphere(root.x, root.y, root.z, dist, true);
 
-        while (voroloop.inc())
-        {
-            voroloop.pos(x, y, z);
-            printf("%d x: %f, y: %f, z: %f\n", ++i, x, y, z);
-        }
+        if (voroloop.start())
+            do
+            {
+                voroloop.pos(x, y, z);
+                printf("%d x: %f, y: %f, z: %f\n", ++i, x, y, z);
+            } while (voroloop.inc());
     }
 
     return 0;
