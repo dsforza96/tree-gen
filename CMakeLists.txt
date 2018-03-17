@@ -42,6 +42,6 @@ add_library(voro++ src/voro++-0.4.6/src/voro++.hh src/voro++-0.4.6/src/c_loops.h
         src/voro++-0.4.6/src/wall.cc)
 set_target_properties(voro++ PROPERTIES LINKER_LANGUAGE CXX)
 
-add_executable(main src/main.cpp)
+add_executable(tree-gen src/tree-gen.cpp)
 
-target_link_libraries(main yocto_gl voro++)
+target_link_libraries(tree-gen yocto_gl voro++)
