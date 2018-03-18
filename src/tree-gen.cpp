@@ -33,7 +33,8 @@ voro::container throw_darts(int N, vec2f p0, vec2f p1, vec2f t0, vec2f t1)
 }
 
 // Crescita dell'albero
-voro::container grow(int iter_num, int N, float D, float dk, float di, const voro::container& voro_attr, vector<int>& parents)
+voro::container grow(int iter_num, int N, float D, float dk, float di, const voro::container& voro_attr,
+                     vector<vec3f>& positions, vector<int>& parents)
 {
     auto nodes_id = 0;
     auto node_id = 0;
@@ -53,6 +54,7 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
     auto new_nodes = std::vector<vec3f>();
 
     auto x = 0.0, y = 0.0, z = 0.0;
+    positions.push_back({0, 0, 0});
     parents.push_back(0);
 
     for (auto i = 0; i < iter_num; i++)
@@ -101,6 +103,7 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
         {
             auto new_node = new_nodes.back();
             voro_nodes.put(nodes_id++, new_node.x, new_node.y, new_node.z);
+            positions.push_back(new_node);
 
             attr_loop.setup_sphere(new_node.x, new_node.y, new_node.z, dk, true);
 
@@ -118,21 +121,47 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
     return voro_nodes;
 }
 
-shape* draw_tree(const voro::container& voro_nodes, const std::vector<int>& parents)
+void make_cylinder(shape* tree, vec3f node, vec3f p_node, float r)
+{
+    auto points = (int) tree->pos.size();
+
+    for (auto i = 0; i <= 16; i++)
+        for (auto j = 0; j <= 16; j++)
+        {
+            auto u = 2 * pif * i / 16;
+            auto v = (float) j / 16;
+
+            auto p = v * p_node + (1 - v) * node;
+
+            tree->pos.push_back({cosf(u) * r + p.x, p.y, sinf(u) * r + p.z});
+            tree->norm.push_back(normalize(p - tree->pos.back()));
+            tree->texcoord.push_back({u / (2 * pif), v});
+
+            if (i != 16 && j != 16)
+                tree->quads.push_back(
+                        {points + i * (16 + 1) + j, points + (i + 1) * (16 + 1) + j, points + (i + 1) * (16 + 1) + j + 1,
+                         points + i * (16 + 1) + j + 1});
+        }
+}
+
+shape* draw_tree(const voro::container& voro_nodes, const std::vector<vec3f> positions, const std::vector<int>& parents)
 {
     auto shp = new shape{"tree"};
-    shp->pos.resize(parents.size());
 
-    for (auto i = (int) shp->pos.size() - 1; i >= 0; i--)
+    printf("points: %d\n", positions.size());
+
+    for (auto i = (int) positions.size() - 1; i >= 0; i--)
     {
-        auto pos = vec3f{(float) voro_nodes.p[i][0], (float) voro_nodes.p[i][1], (float) voro_nodes.p[i][2]};
-        shp->pos[i] = pos;
+        printf("%d:= ", i);
+
+        auto pos = positions[i];
 
         auto par = parents[i];
-        auto ppos = vec3f{(float) voro_nodes.p[par][0], (float) voro_nodes.p[par][1], (float) voro_nodes.p[par][2]};
-        shp->pos[par] = ppos;
+        auto ppos = positions[par];
 
-        shp->lines.push_back({i, par});
+        printf("n: %f, %f, %f\tp: %f, %f, %f\n", pos.x, pos.y, pos.z, ppos.x, ppos.y, ppos.z);
+
+        make_cylinder(shp, pos, ppos, 0.01f);
     }
 
     return shp;
@@ -143,32 +172,33 @@ int main()
     auto scn = new scene();
 
     auto N = 100;
-    auto iter_num = 10;
-    auto D = 1.0f;
+    auto iter_num = 100;
+    auto D = 0.1f;
     auto dk = D * 2;
     auto di = D * 17;
 
     auto p0 = vec2f{0, 0};
-    auto p1 = vec2f{100, 0};
-    auto t0 = vec2f{60, 20};
-    auto t1 = vec2f{10, 40};
+    auto p1 = vec2f{10, 0};
+    auto t0 = vec2f{6, 2};
+    auto t1 = vec2f{1, 4};
 
+    auto pos = vector<vec3f>();
     auto par = vector<int>();
 
     auto voro_attr = throw_darts(N, p0, p1, t0, t1);
 
-    auto voro_nodes = grow(iter_num, N, D, dk, di, voro_attr, par);
+    auto voro_nodes = grow(iter_num, N, D, dk, di, voro_attr, pos, par);
 
-    auto tree = draw_tree(voro_nodes, par);
+    auto tree = draw_tree(voro_nodes, pos, par);
 
     //Test scena
-    tree->mat = add_test_material(scn, test_material_type::matte_gray);
+    tree->mat = add_test_material(scn, test_material_type::matte_colored);
     scn->shapes.push_back(tree);
     auto inst = new instance{"tree", identity_frame3f, tree};
     scn->instances.push_back(inst);
     add_test_camera(scn, test_camera_type::cam3);
     add_test_lights(scn, test_light_type::envlight);
-    add_test_instance(scn, test_shape_type::lines1, test_material_type::matte_green, identity_frame3f);
+    add_test_instance(scn, test_shape_type::floor, test_material_type::matte_green, identity_frame3f);
     add_test_environment(scn, test_environment_type::sky1, identity_frame3f);
 
     printf("%d\n", tree->pos.size());

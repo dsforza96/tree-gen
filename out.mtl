@@ -1,7 +1,8 @@
-newmtl matte_gray
+newmtl matte_colored
   illum 2
-  Kd 0.2 0.2 0.2
+  Kd 1 1 1
   Ns 2e+16
+  map_Kd colored.png
 
 newmtl matte_green
   illum 2
