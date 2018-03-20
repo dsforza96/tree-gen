@@ -4,7 +4,8 @@
 
 using namespace ygl;
 
-// Genera in modo randomico i punti di attrazione
+/* Genera in modo randomico i punti di attrazione e crea il
+   diagramma di Voronoi */
 voro::container throw_darts(int N, vec2f p0, vec2f p1, vec2f t0, vec2f t1)
 {
     auto points = std::vector<vec3f>();
@@ -26,6 +27,7 @@ voro::container throw_darts(int N, vec2f p0, vec2f p1, vec2f t0, vec2f t1)
     auto vorodiag = voro::container(bbox.min.x - eps, bbox.max.x + eps, bbox.min.y - eps, bbox.max.y + eps,
                                     bbox.min.z - eps, bbox.max.z + eps, N / 5, N / 5, N / 5, false, false, false, 8);
 
+    // aggiungo tutti i punti di attrazione
     for (auto i = 0; i < N; i++)
         vorodiag.put(i, points[i].x, points[i].y, points[i].z);
 
@@ -37,11 +39,9 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
                      vector<vec3f>& positions, vector<int>& parents)
 {
     auto nodes_id = 0;
-    auto node_id = 0;
-    auto attr_id = 0;
-    auto search_id = 0;
 
-    auto reder = 0.0;
+    positions.push_back({0, 0, 0});
+    parents.push_back(0);
 
     auto attr_loop = voro::c_loop_subset(voro_attr);
 
@@ -53,10 +53,20 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
     auto dead_attr = std::unordered_set<int>();
     auto new_nodes = std::vector<vec3f>();
 
-    auto x = 0.0, y = 0.0, z = 0.0;
-    positions.push_back({0, 0, 0});
-    parents.push_back(0);
+    auto node_id = 0, attr_id = 0, search_id = 0;
+    auto x = 0.0, y = 0.0, z = 0.0, reder = 0.0;
 
+    // uccidi gli attraction points vicini alla radice
+    attr_loop.setup_sphere(x, y, z, dk, true);
+
+    if (attr_loop.start())
+        do
+        {
+            attr_loop.pos(attr_id, x, y, z, reder);
+            dead_attr.insert(attr_id);
+        } while (attr_loop.inc());
+
+    // loop di crescita
     for (auto i = 0; i < iter_num; i++)
     {
         if (dead_attr.size() == N)
@@ -94,7 +104,7 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
 
                 if (summed)
                 {
-                    new_nodes.push_back(node + D * sum);
+                    new_nodes.push_back(node + D * normalize(sum));
                     parents.push_back(node_id);
                 }
             } while (nodes_loop.inc());
@@ -151,7 +161,7 @@ shape* draw_tree(const voro::container& voro_nodes, const std::vector<vec3f> pos
 
     printf("points: %d\n", positions.size());
 
-    for (auto i = (int) positions.size() - 1; i >= 0; i--)
+    for (auto i = (int) positions.size() - 1; i > 0; i--)
     {
         printf("%d:= ", i);
 
@@ -191,10 +201,10 @@ int main(int argc, char** argv)
     auto t0 = vec2f{6, 2};
     auto t1 = vec2f{1, 4};
 
+    auto voro_attr = throw_darts(N, p0, p1, t0, t1);
+
     auto pos = vector<vec3f>();
     auto par = vector<int>();
-
-    auto voro_attr = throw_darts(N, p0, p1, t0, t1);
 
     auto voro_nodes = grow(iter_num, N, D, dk, di, voro_attr, pos, par);
 
@@ -210,7 +220,7 @@ int main(int argc, char** argv)
     add_test_instance(scn, test_shape_type::floor, test_material_type::matte_green, identity_frame3f);
     add_test_environment(scn, test_environment_type::sky1, identity_frame3f);
 
-    printf("%d\n", tree->pos.size());
+    printf("%i\n", tree->pos.size());
 
     save_scene(path, scn, save_options());
 
