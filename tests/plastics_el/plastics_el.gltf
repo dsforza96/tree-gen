@@ -1,0 +1,675 @@
+{
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 4225,
+      "max": [
+        20.0,
+        0.0,
+        20.0
+      ],
+      "min": [
+        -20.0,
+        0.0,
+        -20.0
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 4225,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 4225,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5125,
+      "count": 24576,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 8385,
+      "max": [
+        1.0,
+        1.0,
+        0.740951120853424
+      ],
+      "min": [
+        -1.0,
+        -1.0,
+        -0.740951240062714
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5126,
+      "count": 8385,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 8385,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 7,
+      "componentType": 5125,
+      "count": 49152,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 8,
+      "componentType": 5126,
+      "count": 8385,
+      "max": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929
+      ],
+      "min": [
+        -0.800000011920929,
+        -0.800000011920929,
+        -0.800000011920929
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 9,
+      "componentType": 5126,
+      "count": 8385,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 10,
+      "componentType": 5126,
+      "count": 8385,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 11,
+      "componentType": 5125,
+      "count": 49152,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 12,
+      "componentType": 5126,
+      "count": 8385,
+      "max": [
+        1.0,
+        1.0,
+        0.740951120853424
+      ],
+      "min": [
+        -1.0,
+        -1.0,
+        -0.740951240062714
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 13,
+      "componentType": 5126,
+      "count": 8385,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 14,
+      "componentType": 5126,
+      "count": 8385,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 15,
+      "componentType": 5125,
+      "count": 49152,
+      "type": "SCALAR"
+    },
+    {
+      "bufferView": 16,
+      "componentType": 5126,
+      "count": 8385,
+      "max": [
+        1.0,
+        1.0,
+        0.740951120853424
+      ],
+      "min": [
+        -1.0,
+        -1.0,
+        -0.740951240062714
+      ],
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 17,
+      "componentType": 5126,
+      "count": 8385,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 18,
+      "componentType": 5126,
+      "count": 8385,
+      "type": "VEC2"
+    },
+    {
+      "bufferView": 19,
+      "componentType": 5125,
+      "count": 49152,
+      "type": "SCALAR"
+    }
+  ],
+  "asset": {
+    "generator": "Yocto/gltf",
+    "version": "2.0"
+  },
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 50700,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 50700,
+      "byteOffset": 50700,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 33800,
+      "byteOffset": 101400,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 98304,
+      "byteOffset": 135200,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 100620,
+      "byteOffset": 233504,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 100620,
+      "byteOffset": 334124,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 67080,
+      "byteOffset": 434744,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 196608,
+      "byteOffset": 501824,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 100620,
+      "byteOffset": 698432,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 100620,
+      "byteOffset": 799052,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 67080,
+      "byteOffset": 899672,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 196608,
+      "byteOffset": 966752,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 100620,
+      "byteOffset": 1163360,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 100620,
+      "byteOffset": 1263980,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 67080,
+      "byteOffset": 1364600,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 196608,
+      "byteOffset": 1431680,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 100620,
+      "byteOffset": 1628288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 100620,
+      "byteOffset": 1728908,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 67080,
+      "byteOffset": 1829528,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 196608,
+      "byteOffset": 1896608,
+      "target": 34962
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 2093216,
+      "uri": "plastics_el.bin"
+    }
+  ],
+  "cameras": [
+    {
+      "name": "cam3",
+      "perspective": {
+        "aspectRatio": 2.34999990463257,
+        "yfov": 0.130899697542191,
+        "zfar": 10000.0,
+        "znear": 0.00999999977648258
+      },
+      "type": "perspective"
+    }
+  ],
+  "images": [
+    {
+      "uri": "sky1.hdr"
+    },
+    {
+      "uri": "grid.png"
+    },
+    {
+      "uri": "colored.png"
+    }
+  ],
+  "materials": [
+    {
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseTexture": {
+            "index": 0
+          },
+          "glossinessFactor": 0.999899983406067,
+          "specularFactor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      },
+      "name": "matte_grid"
+    },
+    {
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseFactor": [
+            0.200000002980232,
+            0.5,
+            0.200000002980232,
+            1.0
+          ],
+          "glossinessFactor": 0.999899983406067,
+          "specularFactor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      },
+      "name": "matte_green"
+    },
+    {
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseFactor": [
+            0.200000002980232,
+            0.200000002980232,
+            0.200000002980232,
+            1.0
+          ],
+          "glossinessFactor": 0.999899983406067,
+          "specularFactor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      },
+      "name": "matte_gray"
+    },
+    {
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseFactor": [
+            0.200000002980232,
+            0.5,
+            0.200000002980232,
+            1.0
+          ],
+          "glossinessFactor": 0.899999976158142,
+          "specularFactor": [
+            0.0399999991059303,
+            0.0399999991059303,
+            0.0399999991059303
+          ]
+        }
+      },
+      "name": "plastic_green"
+    },
+    {
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseTexture": {
+            "index": 1
+          },
+          "glossinessFactor": 0.75,
+          "specularFactor": [
+            0.0399999991059303,
+            0.0399999991059303,
+            0.0399999991059303
+          ]
+        }
+      },
+      "name": "plastic_colored"
+    }
+  ],
+  "meshes": [
+    {
+      "name": "floor_matte_grid",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 1,
+            "POSITION": 0,
+            "TEXCOORD_0": 2
+          },
+          "indices": 3,
+          "material": 0
+        }
+      ]
+    },
+    {
+      "name": "matball_matte_green",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 5,
+            "POSITION": 4,
+            "TEXCOORD_0": 6
+          },
+          "indices": 7,
+          "material": 1
+        }
+      ]
+    },
+    {
+      "name": "matballi_matte_gray",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 9,
+            "POSITION": 8,
+            "TEXCOORD_0": 10
+          },
+          "indices": 11,
+          "material": 2
+        }
+      ]
+    },
+    {
+      "name": "matball_plastic_green",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 13,
+            "POSITION": 12,
+            "TEXCOORD_0": 14
+          },
+          "indices": 15,
+          "material": 3
+        }
+      ]
+    },
+    {
+      "name": "matball_plastic_colored",
+      "primitives": [
+        {
+          "attributes": {
+            "NORMAL": 17,
+            "POSITION": 16,
+            "TEXCOORD_0": 18
+          },
+          "indices": 19,
+          "material": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "floor_matte_grid"
+    },
+    {
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -2.5,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "mesh": 1,
+      "name": "matball_matte_green"
+    },
+    {
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -2.5,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "mesh": 2,
+      "name": "matballi_matte_gray"
+    },
+    {
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "mesh": 3,
+      "name": "matball_plastic_green"
+    },
+    {
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "mesh": 2,
+      "name": "matballi_matte_gray!2"
+    },
+    {
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        2.5,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "mesh": 4,
+      "name": "matball_plastic_colored"
+    },
+    {
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        2.5,
+        1.0,
+        0.0,
+        1.0
+      ],
+      "mesh": 2,
+      "name": "matballi_matte_gray!3"
+    },
+    {
+      "camera": 0,
+      "matrix": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.978980422019958,
+        -0.203954264521599,
+        0.0,
+        0.0,
+        0.203954264521599,
+        0.978980422019958,
+        0.0,
+        0.0,
+        6.0,
+        24.0,
+        1.0
+      ],
+      "name": "cam3"
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "scene",
+      "nodes": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "source": 1
+    },
+    {
+      "source": 2
+    }
+  ]
+}

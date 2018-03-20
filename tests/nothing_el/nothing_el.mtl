@@ -1,0 +1,6 @@
+newmtl sky1_mat
+  illum 0
+  Ke 1 1 1
+  Ns 1
+  map_Ke sky1.hdr
+

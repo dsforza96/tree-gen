@@ -144,6 +144,7 @@ void make_cylinder(shape* tree, vec3f node, vec3f p_node, float r)
         }
 }
 
+// Crea la shape dell'albero con i quad dei cilindri
 shape* draw_tree(const voro::container& voro_nodes, const std::vector<vec3f> positions, const std::vector<int>& parents)
 {
     auto shp = new shape{"tree"};
@@ -167,15 +168,23 @@ shape* draw_tree(const voro::container& voro_nodes, const std::vector<vec3f> pos
     return shp;
 }
 
-int main()
+int main(int argc, char** argv)
 {
-    auto scn = new scene();
+    auto parser = make_parser(argc, argv, "tree-gen", "Generate a stochastic tree");
+    auto N = parse_opt(parser, "--attr-points", "-N", "Number of attraction points", 1200);
+    auto D = parse_opt(parser, "--distance", "-D", "Distance between two nodes", 1.0f);
+    auto di = parse_opt(parser, "--influence-radius", "-di", "Radius of influence, equals <val> * D", 17);
+    auto dk = parse_opt(parser, "--kill-distance", "-dk", "Kill distance, equals <val> * D", 2);
+    auto iter_num = parse_opt(parser, "--iter-num", "-i", "Number of iterations", 100);
+    auto path = parse_opt(parser, "--output", "-o", "Output file", "out/out.obj"s);
 
-    auto N = 100;
-    auto iter_num = 100;
-    auto D = 0.1f;
-    auto dk = D * 2;
-    auto di = D * 17;
+    if (parser._usage || should_exit(parser))
+    {
+        printf("%s\n", get_usage(parser).c_str());
+        return 1;
+    }
+
+    auto scn = new scene();
 
     auto p0 = vec2f{0, 0};
     auto p1 = vec2f{10, 0};
@@ -203,7 +212,7 @@ int main()
 
     printf("%d\n", tree->pos.size());
 
-    save_scene("out.obj", scn, save_options());
+    save_scene(path, scn, save_options());
 
     return 0;
 }

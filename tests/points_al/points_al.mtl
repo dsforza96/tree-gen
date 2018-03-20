@@ -1,0 +1,16 @@
+newmtl light_area
+  illum 2
+  Ke 40 40 40
+  Ns 2e+16
+
+newmtl matte_grid
+  illum 2
+  Kd 1 1 1
+  Ns 2e+16
+  map_Kd grid.png
+
+newmtl matte_gray
+  illum 2
+  Kd 0.2 0.2 0.2
+  Ns 2e+16
+
