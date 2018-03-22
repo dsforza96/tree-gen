@@ -35,10 +35,12 @@ voro::container throw_darts(int N, vec2f p0, vec2f p1, vec2f t0, vec2f t1)
 }
 
 // Crescita dell'albero
-voro::container grow(int iter_num, int N, float D, float dk, float di, const voro::container& voro_attr,
-                     vector<vec3f>& positions, vector<int>& parents)
+vector<vec3f> grow(int iter_num, int N, float D, float dk, float di,
+                   const voro::container& voro_attr, vector<int>& parents)
 {
     auto nodes_id = 0;
+
+    auto positions = vector<vec3f>();
 
     positions.push_back({0, 0, 0});
     parents.push_back(0);
@@ -140,7 +142,7 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
         }
     }
 
-    return voro_nodes;
+    return positions;
 }
 
 void make_cylinder(shape* tree, vec3f node, vec3f p_node, float r)
@@ -167,7 +169,7 @@ void make_cylinder(shape* tree, vec3f node, vec3f p_node, float r)
 }
 
 // Crea la shape dell'albero con i quad dei cilindri
-shape* draw_tree(const voro::container& voro_nodes, const std::vector<vec3f> positions, const std::vector<int>& parents)
+shape* draw_tree(const std::vector<vec3f> positions, const std::vector<int>& parents)
 {
     auto shp = new shape{"tree"};
 
@@ -209,12 +211,11 @@ int main(int argc, char** argv)
 
     auto voro_attr = throw_darts(N, p0, p1, t0, t1);
 
-    auto pos = vector<vec3f>();
     auto par = vector<int>();
 
-    auto voro_nodes = grow(iter_num, N, D, dk, di, voro_attr, pos, par);
+    auto pos = grow(iter_num, N, D, dk, di, voro_attr, par);
 
-    auto tree = draw_tree(voro_nodes, pos, par);
+    auto tree = draw_tree(pos, par);
 
     //Test scena
     tree->mat = add_test_material(scn, test_material_type::matte_colored);
