@@ -16,10 +16,11 @@ voro::container throw_darts(int N, vec2f p0, vec2f p1, vec2f t0, vec2f t1)
     for (auto i = 0; i < N; i++)
     {
         auto y = next_rand1f(rng, p0.x, p1.x);
-        auto r = next_rand1f(rng, 0, eval_bezier_cubic(p1, t1, t0, p0, y).y);
+        auto r = eval_bezier_cubic(p1, t1, t0, p0, y).y;
+        auto p = sqrtf(next_rand1f(rng, 0, r * r));
         auto t = next_rand1f(rng, 0, 2 * pif);
 
-        points.push_back({cosf(t) * r, y, sinf(t) * r});
+        points.push_back({cosf(t) * p, y, sinf(t) * p});
 
         bbox += points.back();
     }
