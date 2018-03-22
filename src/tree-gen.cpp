@@ -51,6 +51,8 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
     auto nodes_loop = voro::c_loop_all(voro_nodes);
 
     auto dead_attr = std::unordered_set<int>();
+    auto computed_attr = std::unordered_set<int>();
+    auto dead_nodes = std::unordered_set<int>();
     auto new_nodes = std::vector<vec3f>();
 
     auto node_id = 0, attr_id = 0, search_id = 0;
@@ -72,10 +74,16 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
         if (dead_attr.size() == N)
             break;
 
+        computed_attr.clear();
+
         if (nodes_loop.start())
             do
             {
                 nodes_loop.pos(node_id, x, y, z, reder);
+
+                if (dead_nodes.count(node_id))
+                    continue;
+
                 auto node = vec3f {(float) x, (float) y, (float) z};
 
                 attr_loop.setup_sphere(node.x, node.y, node.z, di, true);
@@ -88,7 +96,7 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
                     {
                         attr_loop.pos(attr_id, x, y, z, reder);
 
-                        if (dead_attr.count(attr_id))
+                        if (dead_attr.count(attr_id) || computed_attr.count(attr_id))
                             continue;
 
                         auto attr = vec3f{(float) x, (float) y, (float) z};
@@ -97,6 +105,8 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
 
                         if (search_id != node_id)
                             continue;
+
+                        computed_attr.insert(attr_id);
 
                         sum += normalize(attr - node);
                         summed = true;
@@ -107,6 +117,8 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
                     new_nodes.insert(new_nodes.begin(), node + D * normalize(sum));
                     parents.push_back(node_id);
                 }
+                else
+                    dead_nodes.insert(node_id);
             } while (nodes_loop.inc());
 
         while (!new_nodes.empty())
