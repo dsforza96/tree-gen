@@ -104,7 +104,7 @@ voro::container grow(int iter_num, int N, float D, float dk, float di, const vor
 
                 if (summed)
                 {
-                    new_nodes.push_back(node + D * normalize(sum));
+                    new_nodes.insert(new_nodes.begin(), node + D * normalize(sum));
                     parents.push_back(node_id);
                 }
             } while (nodes_loop.inc());
