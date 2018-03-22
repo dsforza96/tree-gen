@@ -16,8 +16,8 @@ voro::container throw_darts(int N, vec2f p0, vec2f p1, vec2f t0, vec2f t1)
     for (auto i = 0; i < N; i++)
     {
         auto y = next_rand1f(rng, p0.x, p1.x);
-        auto p = eval_bezier_cubic(p1, t1, t0, p0, y);
-        auto xz = next_rand2f(rng, -p, p);
+        auto p = eval_bezier_cubic(p1, t1, t0, p0, y).y;
+        auto xz = next_rand2f(rng, {-p, -p}, {p, p});
 
         points.push_back({xz.x, y, xz.y});
 
@@ -171,18 +171,12 @@ shape* draw_tree(const voro::container& voro_nodes, const std::vector<vec3f> pos
 {
     auto shp = new shape{"tree"};
 
-    printf("points: %d\n", positions.size());
-
     for (auto i = (int) positions.size() - 1; i > 0; i--)
     {
-        printf("%d:= ", i);
-
         auto pos = positions[i];
 
         auto par = parents[i];
         auto ppos = positions[par];
-
-        printf("n: %f, %f, %f\tp: %f, %f, %f\n", pos.x, pos.y, pos.z, ppos.x, ppos.y, ppos.z);
 
         make_cylinder(shp, pos, ppos, 0.01f);
     }
@@ -231,8 +225,6 @@ int main(int argc, char** argv)
     add_test_lights(scn, test_light_type::envlight);
     add_test_instance(scn, test_shape_type::floor, test_material_type::matte_green, identity_frame3f);
     add_test_environment(scn, test_environment_type::sky1, identity_frame3f);
-
-    printf("%i\n", tree->pos.size());
 
     save_scene(path, scn, save_options());
 
