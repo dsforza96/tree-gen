@@ -6,7 +6,7 @@ using namespace ygl;
 
 /* Genera in modo randomico i punti di attrazione e crea il
    diagramma di Voronoi */
-voro::container throw_darts(int N, vec2f p0, vec2f p1, vec2f t0, vec2f t1)
+voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f& t0, const vec2f& t1)
 {
     auto points = std::vector<vec3f>();
     auto bbox = bbox3f();
@@ -36,12 +36,13 @@ voro::container throw_darts(int N, vec2f p0, vec2f p1, vec2f t0, vec2f t1)
 }
 
 // Crescita dell'albero
-vector<vec3f> grow(int iter_num, int N, float D, float dk, float di,
-                   const voro::container& voro_attr, vector<int>& parents)
+std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
+                   const voro::container& voro_attr, std::vector<int>& parents)
 {
     auto nodes_id = 0;
 
-    auto positions = vector<vec3f>();
+    auto positions = std::vector<vec3f>();
+    parents = std::vector<int>();
 
     positions.push_back({0, 0, 0});
     parents.push_back(0);
@@ -146,7 +147,7 @@ vector<vec3f> grow(int iter_num, int N, float D, float dk, float di,
     return positions;
 }
 
-void make_cylinder(shape* tree, vec3f node, vec3f p_node, float r)
+void make_cylinder(shape* tree, const vec3f& node, const vec3f& p_node, float r)
 {
     auto points = (int) tree->pos.size();
 
@@ -210,11 +211,10 @@ int main(int argc, char** argv)
     auto t0 = vec2f{6, 2};
     auto t1 = vec2f{1, 4};
 
-    auto voro_attr = throw_darts(N, p0, p1, t0, t1);
+    auto vorodiag = throw_darts(N, p0, p1, t0, t1);
 
-    auto par = vector<int>();
-
-    auto pos = grow(iter_num, N, D, dk, di, voro_attr, par);
+    std::vector<int> par;
+    auto pos = grow(iter_num, N, D, di, dk, vorodiag, par);
 
     auto tree = draw_tree(pos, par);
 
