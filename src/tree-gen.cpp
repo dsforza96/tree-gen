@@ -151,22 +151,26 @@ void make_cylinder(shape* tree, const vec3f& node, const vec3f& p_node, float r)
 {
     auto points = (int) tree->pos.size();
 
+    auto axis = node - p_node;
+    auto h = length(axis);
+    auto f = make_frame_fromz(p_node, axis);
+
     for (auto i = 0; i <= 16; i++)
         for (auto j = 0; j <= 16; j++)
-        {
-            auto u = 2 * pif * i / 16;
+    {
+            auto u = (float) i / 16;
             auto v = (float) j / 16;
 
-            auto p = v * p_node + (1 - v) * node;
+            auto c = transform_point(f, {0, 0, v * h});
 
-            tree->pos.push_back({cosf(u) * r + p.x, p.y, sinf(u) * r + p.z});
-            tree->norm.push_back(normalize(p - tree->pos.back()));
-            tree->texcoord.push_back({u / (2 * pif), v});
+            tree->pos.push_back(transform_point(f, {cosf(u * 2 * pif) * r, sinf(u * 2 * pif) * r, v * h}));
+            tree->norm.push_back(normalize(tree->pos.back() - c));
+            tree->texcoord.push_back({u, v});
 
             if (i != 16 && j != 16)
                 tree->quads.push_back(
-                        {points + i * (16 + 1) + j, points + (i + 1) * (16 + 1) + j, points + (i + 1) * (16 + 1) + j + 1,
-                         points + i * (16 + 1) + j + 1});
+                        {points + i * (16 + 1) + j, points + (i + 1) * (16 + 1) + j,
+                         points + (i + 1) * (16 + 1) + j + 1, points + i * (16 + 1) + j + 1});
         }
 }
 
@@ -182,7 +186,7 @@ shape* draw_tree(const std::vector<vec3f> positions, const std::vector<int>& par
         auto par = parents[i];
         auto ppos = positions[par];
 
-        make_cylinder(shp, pos, ppos, 0.01f);
+        make_cylinder(shp, pos, ppos, 0.1f);
     }
 
     return shp;
@@ -206,10 +210,10 @@ int main(int argc, char** argv)
 
     auto scn = new scene();
 
-    auto p0 = vec2f{0, 0};
-    auto p1 = vec2f{10, 0};
-    auto t0 = vec2f{6, 2};
-    auto t1 = vec2f{1, 4};
+    auto p0 = vec2f{2, 6};
+    auto p1 = vec2f{10, 6};
+    auto t0 = vec2f{11, 6};
+    auto t1 = vec2f{11, 6};
 
     auto vorodiag = throw_darts(N, p0, p1, t0, t1);
 
