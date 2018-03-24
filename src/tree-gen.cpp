@@ -4,13 +4,16 @@
 
 using namespace ygl;
 
+const auto e = 2.71828184f;     // esponente per sommatoria dei raggi
+const auto r0 = 0.01f;          // raggio iniziale
+const auto eps = 0.02f;
+
 /* Genera in modo randomico i punti di attrazione e crea il
    diagramma di Voronoi */
 voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f& t0, const vec2f& t1)
 {
     auto points = std::vector<vec3f>();
     auto bbox = bbox3f();
-    const auto eps = 0.02f;
     auto rng = init_rng(time(nullptr));
 
     for (auto i = 0; i < N; i++)
@@ -49,7 +52,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
 
     auto attr_loop = voro::c_loop_subset(voro_attr);
 
-    auto voro_nodes = voro::container(voro_attr.ax, voro_attr.bx, min(voro_attr.ay, -0.02f), voro_attr.by,
+    auto voro_nodes = voro::container(voro_attr.ax, voro_attr.bx, min(voro_attr.ay, -eps), voro_attr.by,
                                       voro_attr.az, voro_attr.bz, N / 5, N / 5, N / 5, false, false, false, 8);
     voro_nodes.put(nodes_id++, 0.0f, 0.0f, 0.0f);
     auto nodes_loop = voro::c_loop_all(voro_nodes);
@@ -179,6 +182,8 @@ shape* draw_tree(const std::vector<vec3f> positions, const std::vector<int>& par
 {
     auto shp = new shape{"tree"};
 
+    auto rad = std::vector<float>(positions.size(), 0.0f);
+
     for (auto i = (int) positions.size() - 1; i > 0; i--)
     {
         auto pos = positions[i];
@@ -186,7 +191,10 @@ shape* draw_tree(const std::vector<vec3f> positions, const std::vector<int>& par
         auto par = parents[i];
         auto ppos = positions[par];
 
-        make_cylinder(shp, pos, ppos, 0.1f);
+        auto r = rad[i] == 0.0f ? r0 : pow(rad[i], 1/e);
+        rad[par] += pow(r, e);
+
+        make_cylinder(shp, pos, ppos, r);
     }
 
     return shp;
