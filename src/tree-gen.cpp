@@ -38,7 +38,7 @@ voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f
     return vorodiag;
 }
 
-void add_branch(const vec3f& node, int node_id, float di, float D, const voro::container& voro_attr,
+void add_branch(vec3f node, int node_id, float di, float D, const voro::container& voro_attr,
                 voro::container& voro_nodes, std::unordered_set<int>& dead_attr, std::unordered_set<int>& computed_attr,
                 std::unordered_set<int>& dead_nodes, std::vector<vec3f>& new_nodes,
                 std::vector<vec3f>& positions, std::vector<int>& parents)
@@ -86,8 +86,6 @@ void add_branch(const vec3f& node, int node_id, float di, float D, const voro::c
 std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
                    const voro::container& voro_attr, std::vector<int>& parents)
 {
-    auto nodes_id = 0;
-
     auto positions = std::vector<vec3f>();
     parents = std::vector<int>();
 
@@ -98,7 +96,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
 
     auto voro_nodes = voro::container(voro_attr.ax, voro_attr.bx, min(voro_attr.ay, -eps), voro_attr.by,
                                       voro_attr.az, voro_attr.bz, N / 5, N / 5, N / 5, false, false, false, 8);
-    voro_nodes.put(nodes_id++, 0.0f, 0.0f, 0.0f);
+    voro_nodes.put(0, 0.0f, 0.0f, 0.0f);
     auto nodes_loop = voro::c_loop_all(voro_nodes);
 
     auto dead_attr = std::unordered_set<int>();
@@ -139,7 +137,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
 
                 auto node = vec3f {(float) x, (float) y, (float) z};
 
-                threads.push_back(std::thread(add_branch, std::ref(node), node_id, di, D,
+                threads.push_back(std::thread(add_branch, node, node_id, di, D,
                                               std::ref(voro_attr), std::ref(voro_nodes), std::ref(dead_attr),
                                               std::ref(computed_attr), std::ref(dead_nodes), std::ref(new_nodes),
                                               std::ref(positions), std::ref(parents)));
@@ -154,7 +152,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
         while (!new_nodes.empty())
         {
             auto new_node = new_nodes.back();
-            voro_nodes.put(nodes_id++, new_node.x, new_node.y, new_node.z);
+            voro_nodes.put(positions.size(), new_node.x, new_node.y, new_node.z);
             positions.push_back(new_node);
 
             attr_loop.setup_sphere(new_node.x, new_node.y, new_node.z, dk, true);
