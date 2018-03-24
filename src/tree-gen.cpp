@@ -38,6 +38,50 @@ voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f
     return vorodiag;
 }
 
+void add_branch(const vec3f& node, int node_id, float di, float D, const voro::container& voro_attr,
+                voro::container& voro_nodes, std::unordered_set<int>& dead_attr, std::unordered_set<int>& computed_attr,
+                std::unordered_set<int>& dead_nodes, std::vector<vec3f>& new_nodes,
+                std::vector<vec3f>& positions, std::vector<int>& parents)
+{ 
+    auto attr_id = 0, search_id = 0;
+    auto x = 0.0, y = 0.0, z = 0.0, reder = 0.0;
+
+    auto attr_loop = voro::c_loop_subset(voro_attr);
+    attr_loop.setup_sphere(node.x, node.y, node.z, di, true);
+
+    auto sum = vec3f{0, 0, 0};
+    auto summed = false;
+
+    if (attr_loop.start())
+        do
+        {
+            attr_loop.pos(attr_id, x, y, z, reder);
+
+            if (dead_attr.count(attr_id) || computed_attr.count(attr_id))
+                continue;
+
+            auto attr = vec3f{(float) x, (float) y, (float) z};
+
+            voro_nodes.find_voronoi_cell(attr.x, attr.y, attr.z, x, y, z, search_id);
+
+            if (search_id != node_id)
+                continue;
+
+            computed_attr.insert(attr_id);
+
+            sum += normalize(attr - node);
+            summed = true;
+        } while (attr_loop.inc());
+
+    if (summed)
+    {
+        new_nodes.insert(new_nodes.begin(), node + D * normalize(sum));
+        parents.push_back(node_id);
+    }
+    else
+        dead_nodes.insert(node_id);
+}
+
 // Crescita dell'albero
 std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
                    const voro::container& voro_attr, std::vector<int>& parents)
@@ -61,6 +105,8 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
     auto computed_attr = std::unordered_set<int>();
     auto dead_nodes = std::unordered_set<int>();
     auto new_nodes = std::vector<vec3f>();
+
+    auto threads = std::vector<std::thread>();
 
     auto node_id = 0, attr_id = 0, search_id = 0;
     auto x = 0.0, y = 0.0, z = 0.0, reder = 0.0;
@@ -93,40 +139,17 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
 
                 auto node = vec3f {(float) x, (float) y, (float) z};
 
-                attr_loop.setup_sphere(node.x, node.y, node.z, di, true);
-
-                auto sum = vec3f{0, 0, 0};
-                auto summed = false;
-
-                if (attr_loop.start())
-                    do
-                    {
-                        attr_loop.pos(attr_id, x, y, z, reder);
-
-                        if (dead_attr.count(attr_id) || computed_attr.count(attr_id))
-                            continue;
-
-                        auto attr = vec3f{(float) x, (float) y, (float) z};
-
-                        voro_nodes.find_voronoi_cell(attr.x, attr.y, attr.z, x, y, z, search_id);
-
-                        if (search_id != node_id)
-                            continue;
-
-                        computed_attr.insert(attr_id);
-
-                        sum += normalize(attr - node);
-                        summed = true;
-                    } while (attr_loop.inc());
-
-                if (summed)
-                {
-                    new_nodes.insert(new_nodes.begin(), node + D * normalize(sum));
-                    parents.push_back(node_id);
-                }
-                else
-                    dead_nodes.insert(node_id);
+                threads.push_back(std::thread(add_branch, std::ref(node), node_id, di, D,
+                                              std::ref(voro_attr), std::ref(voro_nodes), std::ref(dead_attr),
+                                              std::ref(computed_attr), std::ref(dead_nodes), std::ref(new_nodes),
+                                              std::ref(positions), std::ref(parents)));
             } while (nodes_loop.inc());
+
+        while (!threads.empty())
+        {
+            threads.back().join();
+            threads.pop_back();
+        }
 
         while (!new_nodes.empty())
         {
