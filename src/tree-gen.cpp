@@ -14,7 +14,7 @@ std::mutex mut;
    diagramma di Voronoi */
 voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f& t0, const vec2f& t1)
 {
-    auto points = std::vector<vec3f>();
+    auto points = vector<vec3f>();
     auto bbox = bbox3f();
     auto rng = init_rng(time(nullptr));
 
@@ -41,9 +41,10 @@ voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f
 }
 
 void add_branch(vec3f node, int node_id, float di, float D, const voro::container& voro_attr,
-                voro::container& voro_nodes, std::unordered_set<int>& dead_attr, std::unordered_set<int>& computed_attr,
-                std::unordered_set<int>& dead_nodes, std::vector<std::pair<vec3f, int>>& new_nodes)
-{ 
+                voro::container& voro_nodes, unordered_set<int>& dead_attr,
+                unordered_map<int, int>& computed_attr, unordered_set<int>& dead_nodes,
+                vector<pair<vec3f, int>>& new_nodes)
+{
     auto attr_id = 0, search_id = 0;
     auto x = 0.0, y = 0.0, z = 0.0, reder = 0.0;
 
@@ -63,14 +64,19 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
 
             auto attr = vec3f{(float) x, (float) y, (float) z};
 
-            mut.lock();
-            voro_nodes.find_voronoi_cell(attr.x, attr.y, attr.z, x, y, z, search_id);
-            mut.unlock();
+            if (computed_attr.count(attr_id))
+                search_id = computed_attr.at(attr_id);
+            else
+            {
+                mut.lock();
+                voro_nodes.find_voronoi_cell(attr.x, attr.y, attr.z, x, y, z, search_id);
+                mut.unlock();
+
+                computed_attr.insert(pair<int, int>(attr_id, search_id));
+            }
 
             if (search_id != node_id)
                 continue;
-
-            computed_attr.insert(attr_id);
 
             sum += normalize(attr - node);
             summed = true;
@@ -86,11 +92,11 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
 }
 
 // Crescita dell'albero
-std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
-                   const voro::container& voro_attr, std::vector<int>& parents)
+vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
+                   const voro::container& voro_attr, vector<int>& parents)
 {
-    auto positions = std::vector<vec3f>();
-    parents = std::vector<int>();
+    auto positions = vector<vec3f>();
+    parents = vector<int>();
 
     positions.push_back({0, 0, 0});
     parents.push_back(0);
@@ -102,12 +108,12 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
     voro_nodes.put(0, 0.0f, 0.0f, 0.0f);
     auto nodes_loop = voro::c_loop_all(voro_nodes);
 
-    auto dead_attr = std::unordered_set<int>();
-    auto computed_attr = std::unordered_set<int>();
-    auto dead_nodes = std::unordered_set<int>();
-    auto new_nodes = std::vector<std::pair<vec3f, int>>();
+    auto dead_attr = unordered_set<int>();
+    auto computed_attr = unordered_map<int, int>();
+    auto dead_nodes = unordered_set<int>();
+    auto new_nodes = vector<pair<vec3f, int>>();
 
-    auto threads = std::vector<std::thread>();
+    auto threads = vector<std::thread>();
 
     auto node_id = 0, attr_id = 0;
     auto x = 0.0, y = 0.0, z = 0.0, reder = 0.0;
@@ -141,8 +147,8 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
                 auto node = vec3f {(float) x, (float) y, (float) z};
 
                 threads.push_back(std::thread(add_branch, node, node_id, di, D,
-                                              std::ref(voro_attr), std::ref(voro_nodes), std::ref(dead_attr),
-                                              std::ref(computed_attr), std::ref(dead_nodes), std::ref(new_nodes)));
+                                              std::ref(voro_attr), std::ref(voro_nodes), ref(dead_attr),
+                                              ref(computed_attr), ref(dead_nodes), ref(new_nodes)));
             } while (nodes_loop.inc());
 
         while (!threads.empty())
@@ -202,11 +208,11 @@ void make_cylinder(shape* tree, const vec3f& node, const vec3f& p_node, float r)
 }
 
 // Crea la shape dell'albero con i quad dei cilindri
-shape* draw_tree(const std::vector<vec3f> positions, const std::vector<int>& parents)
+shape* draw_tree(const vector<vec3f> positions, const vector<int>& parents)
 {
     auto shp = new shape{"tree"};
 
-    auto rad = std::vector<float>(positions.size(), 0.0f);
+    auto rad = vector<float>(positions.size(), 0.0f);
 
     for (auto i = (int) positions.size() - 1; i > 0; i--)
     {
@@ -249,7 +255,7 @@ int main(int argc, char** argv)
 
     auto vorodiag = throw_darts(N, p0, p1, t0, t1);
 
-    std::vector<int> par;
+    vector<int> par;
     auto pos = grow(iter_num, N, D, di, dk, vorodiag, par);
 
     auto tree = draw_tree(pos, par);
