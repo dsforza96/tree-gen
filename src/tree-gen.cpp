@@ -8,6 +8,8 @@ const auto e = 2.71828184f;     // esponente per sommatoria dei raggi
 const auto r0 = 0.01f;          // raggio iniziale
 const auto eps = 0.02f;
 
+std::mutex mut;
+
 /* Genera in modo randomico i punti di attrazione e crea il
    diagramma di Voronoi */
 voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f& t0, const vec2f& t1)
@@ -61,7 +63,9 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
 
             auto attr = vec3f{(float) x, (float) y, (float) z};
 
+            mut.lock();
             voro_nodes.find_voronoi_cell(attr.x, attr.y, attr.z, x, y, z, search_id);
+            mut.unlock();
 
             if (search_id != node_id)
                 continue;
