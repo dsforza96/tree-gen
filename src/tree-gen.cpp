@@ -59,7 +59,7 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
         {
             attr_loop.pos(attr_id, x, y, z, reder);
 
-            if (dead_attr.count(attr_id) || computed_attr.count(attr_id))
+            if (dead_attr.count(attr_id))
                 continue;
 
             auto attr = vec3f{(float) x, (float) y, (float) z};
@@ -70,9 +70,8 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
             {
                 mut.lock();
                 voro_nodes.find_voronoi_cell(attr.x, attr.y, attr.z, x, y, z, search_id);
+                computed_attr.insert({attr_id, search_id});
                 mut.unlock();
-
-                computed_attr.insert(pair<int, int>(attr_id, search_id));
             }
 
             if (search_id != node_id)
