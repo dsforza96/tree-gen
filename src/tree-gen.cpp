@@ -8,8 +8,6 @@ const auto e = 2.71828184f;     // esponente per sommatoria dei raggi
 const auto r0 = 0.01f;          // raggio iniziale
 const auto eps = 0.02f;
 
-std::mutex mut;
-
 /* Genera in modo randomico i punti di attrazione e crea il
    diagramma di Voronoi */
 voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f& t0, const vec2f& t1)
@@ -41,13 +39,14 @@ voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f
 }
 
 void add_branch(vec3f node, int node_id, float di, float D, const voro::container& voro_attr,
-                voro::container& voro_nodes, unordered_set<int>& dead_attr,
-                unordered_map<int, int>& computed_attr, unordered_set<int>& dead_nodes,
+                const voro::container& voro_nodes, unordered_set<int>& dead_attr,
+                unordered_set<int>& computed_attr, unordered_set<int>& dead_nodes,
                 vector<pair<vec3f, int>>& new_nodes)
 {
-    auto attr_id = 0, search_id = 0;
+    auto attr_id = 0;
     auto x = 0.0, y = 0.0, z = 0.0, reder = 0.0;
 
+    auto node_loop = voro::c_loop_subset(voro_nodes);
     auto attr_loop = voro::c_loop_subset(voro_attr);
     attr_loop.setup_sphere(node.x, node.y, node.z, di, true);
 
@@ -59,23 +58,16 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
         {
             attr_loop.pos(attr_id, x, y, z, reder);
 
-            if (dead_attr.count(attr_id))
+            if (dead_attr.count(attr_id) || computed_attr.count(attr_id))
                 continue;
 
             auto attr = vec3f{(float) x, (float) y, (float) z};
 
-            if (computed_attr.count(attr_id))
-                search_id = computed_attr.at(attr_id);
-            else
-            {
-                mut.lock();
-                voro_nodes.find_voronoi_cell(attr.x, attr.y, attr.z, x, y, z, search_id);
-                computed_attr.insert({attr_id, search_id});
-                mut.unlock();
-            }
-
-            if (search_id != node_id)
+            node_loop.setup_sphere(x, y, z, length(attr - node) - eps, true);
+            if (node_loop.start())
                 continue;
+
+            computed_attr.insert(attr_id);
 
             sum += normalize(attr - node);
             summed = true;
@@ -124,7 +116,7 @@ vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
     auto nodes_loop = voro::c_loop_all(voro_nodes);
 
     auto dead_attr = unordered_set<int>();
-    auto computed_attr = unordered_map<int, int>();
+    auto computed_attr = unordered_set<int>();
     auto dead_nodes = unordered_set<int>();
     auto new_nodes = vector<pair<vec3f, int>>();
 
