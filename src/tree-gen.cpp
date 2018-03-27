@@ -170,6 +170,9 @@ vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
             t.join();
         threads.clear();
 
+        if (new_nodes.empty())
+            break;
+
         while (!new_nodes.empty())
         {
             auto new_node = new_nodes.back().first;
@@ -186,7 +189,7 @@ vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
             t.join();
         threads.clear();
 
-        if (i == 0 || i % 10 == 9)
+        if (i % 10 == 9 || !i)
             log_info("{} nodes added after {} iterations...", positions.size(), i + 1);
     }
 
