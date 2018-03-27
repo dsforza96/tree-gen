@@ -83,11 +83,27 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
 
     if (summed)
     {
-        auto p = node + D * normalize(sum);
-        new_nodes.push_back({p, node_id});
+        auto new_node = node + D * normalize(sum);
+        new_nodes.push_back({new_node, node_id});
     }
     else
         dead_nodes.insert(node_id);
+}
+
+void kill_points(vec3f node, float  dk, const voro::container& voro_attr, unordered_set<int>& dead_attr)
+{
+    auto attr_loop = voro::c_loop_subset(voro_attr);
+    attr_loop.setup_sphere(node.x, node.y, node.z, dk, true);
+
+    auto attr_id = 0;
+    auto x = 0.0, y = 0.0, z = 0.0, reder = 0.0;
+
+    if (attr_loop.start())
+        do
+        {
+            attr_loop.pos(attr_id, x, y, z, reder);
+            dead_attr.insert(attr_id);
+        } while (attr_loop.inc());
 }
 
 // Crescita dell'albero
@@ -150,11 +166,9 @@ vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
                                               ref(computed_attr), ref(dead_nodes), ref(new_nodes)));
             } while (nodes_loop.inc());
 
-        while (!threads.empty())
-        {
-            threads.back().join();
-            threads.pop_back();
-        }
+        for (auto& t : threads)
+            t.join();
+        threads.clear();
 
         while (!new_nodes.empty())
         {
@@ -163,17 +177,17 @@ vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
             positions.push_back(new_node);
             parents.push_back(new_nodes.back().second);
 
-            attr_loop.setup_sphere(new_node.x, new_node.y, new_node.z, dk, true);
-
-            if (attr_loop.start())
-                do
-                {
-                    attr_loop.pos(attr_id, x, y, z, reder);
-                    dead_attr.insert(attr_id);
-                } while (attr_loop.inc());
+            threads.push_back(std::thread(kill_points, new_node, dk, std::ref(voro_attr), ref(dead_attr)));
 
             new_nodes.pop_back();
         }
+
+        for (auto& t : threads)
+            t.join();
+        threads.clear();
+
+        if (i == 0 || i % 10 == 9)
+            log_info("{} nodes added after {} iterations...", positions.size(), i + 1);
     }
 
     return positions;
@@ -252,12 +266,20 @@ int main(int argc, char** argv)
     auto t0 = vec2f{11, 6};
     auto t1 = vec2f{11, 6};
 
+    log_info("Generating attraction points...");
+
     auto vorodiag = throw_darts(N, p0, p1, t0, t1);
+
+    log_info("Beginning tree generation...");
 
     vector<int> par;
     auto pos = grow(iter_num, N, D, di, dk, vorodiag, par);
 
+    log_info("Drawing tree...");
+
     auto tree = draw_tree(pos, par);
+
+    log_info("Saving model...");
 
     //Test scena
     tree->mat = add_test_material(scn, test_material_type::matte_colored);
