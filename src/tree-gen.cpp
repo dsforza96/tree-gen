@@ -243,8 +243,8 @@ int main(int argc, char** argv)
     auto parser = make_parser(argc, argv, "tree-gen", "Generate a stochastic tree");
     auto N = parse_opt(parser, "--attr-points", "-N", "Number of attraction points", 1200);
     auto D = parse_opt(parser, "--distance", "-D", "Distance between two nodes", 1.0f);
-    auto di = parse_opt(parser, "--influence-radius", "-di", "Radius of influence, equals <val> * D", 17);
-    auto dk = parse_opt(parser, "--kill-distance", "-dk", "Kill distance, equals <val> * D", 2);
+    auto di = parse_opt(parser, "--influence-radius", "-di", "Radius of influence, equals <val> * D", 17) * D;
+    auto dk = parse_opt(parser, "--kill-distance", "-dk", "Kill distance, equals <val> * D", 2) * D;
     auto iter_num = parse_opt(parser, "--iter-num", "-i", "Number of iterations", 100);
     auto path = parse_opt(parser, "--output", "-o", "Output file", "out/out.obj"s);
 
