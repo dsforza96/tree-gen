@@ -4474,7 +4474,7 @@ inline vec3f _subdivide_normalize(const vec3f& x) { return normalize(x); }
 inline vec4f _subdivide_normalize(const vec4f& x) { return normalize(x); }
 
 /// Tesselate lines, triangles and quads by spolitting edges.
-/// Returns the tesselated elements and dictionaries for vertex calculations.
+/// Returns the tesselated elements and dictionaaies for vertex calculations.
 inline tuple<vector<vec2i>, vector<vec3i>, vector<vec4i>, vector<vec2i>,
     vector<vec4i>>
 subdivide_elems_linear(const vector<vec2i>& lines,

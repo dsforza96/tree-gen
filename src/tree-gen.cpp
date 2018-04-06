@@ -215,15 +215,15 @@ void make_cylinder(shape* tree, const vec3f& node, const vec3f& p_node, float r)
         }
 }
 
-frame3f compute_frame(const vec3f& pos, const vec3f& ppos, const frame3f& pframe)
+frame3f compute_frame(const vec3f pos, const vec3f& tangent, const frame3f& pframe)
 {
-    auto b = cross(normalize(pos - ppos), pframe.z);
+    auto b = cross(tangent, pframe.z);
 
     if (!length(b))
         return make_frame3_fromzx(pos, pframe.z, pframe.x);
 
     b = normalize(b);
-    auto t = acosf(dot(normalize(pos - ppos), pframe.z));
+    auto t = acosf(dot(tangent, pframe.z));
 
     return make_frame3_fromzx(pos, pframe.z, rotation_mat3f(b, t) * pframe.x);
 }
@@ -234,54 +234,51 @@ shape* draw_tree(const vector<vec3f> positions, const vector<int>& parents)
     auto shp = new shape{"tree"};
 
     auto rad = vector<float>(positions.size(), 0.0f);
-    auto frame = vector<frame3f>(positions.size());
+    auto children = vector<int>(positions.size(), 0);
 
     for (auto i = (int) positions.size() - 1; i >= 0; i--)
     {
-        auto pos = positions[i];
+        rad[i] = rad[i] ? pow(rad[i], 1 / e) : r0;
+        rad[parents[i]] += pow(rad[i], e);
 
-        auto par = parents[i];
-        auto ppos = positions[par];
-
-        if (!rad[i])
-        {
-            rad[i] = r0;
-            frame[i] = make_frame_fromz(pos, pos - ppos);
-        }
-        else
-        {
-            rad[i] = pow(rad[i], 1/e);
-            frame [i] = compute_frame(pos, ppos, frame[i]);
-        }
-
-        rad[par] += pow(rad[i], e);
-        frame[par] = frame[i];
+        children[parents[i]]++;
     }
 
     auto ii = 0;
-    auto i = (int) positions.size() - 1;
 
-    //for (auto i = (int) positions.size() - 1; i > 0; i--)
-        while(i > 0 && rad[i])
+    for (auto i = (int) positions.size() - 1; i > 0; i--)
+    {
+        auto child = i;
+        auto pframe = frame3f();
+        auto j = i;
+
+        while (j >= 0 && children[j] >= 1)
         {
-            for (auto j = 0; j <= 16; j++)
-            {
-                auto u = (float) j / 16;
+            auto pos = positions[j];
+            auto tangent = normalize(positions[child] - positions[parents[j]]);
+            auto f = children[j] ? compute_frame(pos, tangent, pframe)
+                                 : make_frame_fromz(pos, tangent);
 
-                shp->pos.push_back(transform_point(frame[i],
-                                                    {cosf(u * 2 * pif) * rad[i], 0, sinf(u * 2 * pif) * rad[i]}));
-                shp->norm.push_back(normalize(shp->pos.back() - positions[i]));
-                shp->texcoord.push_back({u, (float) ii / positions.size()});
+            for (auto jj = 0; jj <= 16; jj++)
+            {
+                auto u = (float) jj / 16;
+
+                shp->pos.push_back(transform_point(f, {cosf(u * 2 * pif) * rad[j], 0, sinf(u * 2 * pif) * rad[j]}));
+                shp->norm.push_back(normalize(shp->pos.back() - pos));
+                shp->texcoord.push_back({u, pos.z});
                 //shp->points.push_back((int) shp->pos.size() - 1);
 
-                if (j != 16)
-                    shp->quads.push_back({ii * (16 + 1) + j, (ii + 1) * (16 + 1) + j,
-                             (ii + 1) * (16 + 1) + j + 1, ii * (16 + 1) + j + 1});
+                if (i != j && jj != 16)
+                    shp->quads.push_back({ii * (16 + 1) + jj, (ii - 1) * (16 + 1) + jj,
+                                          (ii - 1) * (16 + 1) + jj + 1, ii * (16 + 1) + jj + 1});
             }
-            rad[i] = 0;
+            children[j]--;
+            child = j;
+            pframe = f;
+            j = parents[j];
             ii++;
-            i = parents[i];
         }
+    }
 
     return shp;
 }
