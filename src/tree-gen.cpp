@@ -6,7 +6,7 @@ using namespace ygl;
 
 const auto e = 2.71828184f;     // esponente per sommatoria dei raggi
 const auto r0 = 0.01f;          // raggio iniziale
-const auto eps = 0.02f;
+const auto eps = 1e-16f;
 
 /* Genera in modo randomico i punti di attrazione e crea il
    diagramma di Voronoi */
