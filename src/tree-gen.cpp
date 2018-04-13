@@ -220,12 +220,12 @@ frame3f compute_frame(const vec3f pos, const vec3f& tangent, const frame3f& pfra
     auto b = cross(tangent, pframe.z);
 
     if (!length(b))
-        return make_frame3_fromzx(pos, pframe.z, pframe.x);
+        return make_frame3_fromzx(pos, tangent, pframe.x);
 
     b = normalize(b);
     auto t = acosf(dot(tangent, pframe.z));
 
-    return make_frame3_fromzx(pos, pframe.z, rotation_mat3f(b, t) * pframe.x);
+    return make_frame3_fromzx(pos, tangent, rotation_mat3f(b, t) * pframe.x);
 }
 
 // Crea la shape dell'albero con i quad dei cilindri
@@ -241,6 +241,7 @@ shape* draw_tree(const vector<vec3f> positions, const vector<int>& parents)
         rad[i] = rad[i] ? pow(rad[i], 1 / e) : r0;
         rad[parents[i]] += pow(rad[i], e);
 
+        if (!children[i]) children[i]++;    // Per includere le foglie nel prossimo loop
         children[parents[i]]++;
     }
 
@@ -263,7 +264,7 @@ shape* draw_tree(const vector<vec3f> positions, const vector<int>& parents)
             {
                 auto u = (float) jj / 16;
 
-                shp->pos.push_back(transform_point(f, {cosf(u * 2 * pif) * rad[j], 0, sinf(u * 2 * pif) * rad[j]}));
+                shp->pos.push_back(transform_point(f, {sinf(u * 2 * pif) * rad[j], cosf(u * 2 * pif) * rad[j], 0}));
                 shp->norm.push_back(normalize(shp->pos.back() - pos));
                 shp->texcoord.push_back({u, pos.z});
                 //shp->points.push_back((int) shp->pos.size() - 1);
