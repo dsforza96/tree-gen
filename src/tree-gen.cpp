@@ -229,7 +229,7 @@ frame3f compute_frame(const vec3f pos, const vec3f& tangent, const frame3f& pfra
 }
 
 // Crea la shape dell'albero con i quad dei cilindri
-shape* draw_tree(const vector<vec3f> positions, const vector<int>& parents)
+shape* draw_tree(float D, const vector<vec3f> positions, const vector<int>& parents)
 {
     auto shp = new shape{"tree"};
 
@@ -266,7 +266,7 @@ shape* draw_tree(const vector<vec3f> positions, const vector<int>& parents)
 
                 shp->pos.push_back(transform_point(f, {sinf(u * 2 * pif) * rad[j], cosf(u * 2 * pif) * rad[j], 0}));
                 shp->norm.push_back(normalize(shp->pos.back() - pos));
-                shp->texcoord.push_back({u, pos.z});
+                shp->texcoord.push_back({u, ii * D});
                 //shp->points.push_back((int) shp->pos.size() - 1);
 
                 if (i != j && jj != 16)
@@ -318,7 +318,7 @@ int main(int argc, char** argv)
 
     log_info("Drawing tree...");
 
-    auto tree = draw_tree(pos, par);
+    auto tree = draw_tree(D, pos, par);
 
     log_info("Saving model...");
 
