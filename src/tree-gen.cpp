@@ -241,7 +241,6 @@ shape* draw_tree(float D, const vector<vec3f> positions, const vector<int>& pare
         rad[i] = rad[i] ? pow(rad[i], 1 / e) : r0;
         rad[parents[i]] += pow(rad[i], e);
 
-        if (!children[i]) children[i]++;    // Per includere le foglie nel prossimo loop
         children[parents[i]]++;
     }
 
@@ -249,16 +248,19 @@ shape* draw_tree(float D, const vector<vec3f> positions, const vector<int>& pare
 
     for (auto i = (int) positions.size() - 1; i > 0; i--)
     {
+        if (rad[i] != r0)
+            continue;
+
         auto child = i;
         auto pframe = frame3f();
         auto j = i;
 
-        while (j >= 0 && children[j] >= 1)
+        while (child)
         {
             auto pos = positions[j];
             auto tangent = normalize(positions[child] - positions[parents[j]]);
-            auto f = children[j] ? compute_frame(pos, tangent, pframe)
-                                 : make_frame_fromz(pos, tangent);
+            auto f = i != j ? compute_frame(pos, tangent, pframe)
+                            : make_frame_fromz(pos, tangent);
 
             for (auto jj = 0; jj <= 16; jj++)
             {
@@ -267,17 +269,19 @@ shape* draw_tree(float D, const vector<vec3f> positions, const vector<int>& pare
                 shp->pos.push_back(transform_point(f, {sinf(u * 2 * pif) * rad[j], cosf(u * 2 * pif) * rad[j], 0}));
                 shp->norm.push_back(normalize(shp->pos.back() - pos));
                 shp->texcoord.push_back({u, ii * D});
-                //shp->points.push_back((int) shp->pos.size() - 1);
 
                 if (i != j && jj != 16)
                     shp->quads.push_back({ii * (16 + 1) + jj, (ii - 1) * (16 + 1) + jj,
                                           (ii - 1) * (16 + 1) + jj + 1, ii * (16 + 1) + jj + 1});
             }
-            children[j]--;
+            ii++;
+            if (children[j])
+                break;
+
+            children[parents[j]]--;
             child = j;
             pframe = f;
             j = parents[j];
-            ii++;
         }
     }
 
