@@ -188,33 +188,6 @@ vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
     return positions;
 }
 
-void make_cylinder(shape* tree, const vec3f& node, const vec3f& p_node, float r)
-{
-    auto points = (int) tree->pos.size();
-
-    auto axis = node - p_node;
-    auto h = length(axis);
-    auto f = make_frame_fromz(p_node, axis);
-
-    for (auto i = 0; i <= 16; i++)
-        for (auto j = 0; j <= 16; j++)
-    {
-            auto u = (float) i / 16;
-            auto v = (float) j / 16;
-
-            auto c = transform_point(f, {0, 0, v * h});
-
-            tree->pos.push_back(transform_point(f, {cosf(u * 2 * pif) * r, sinf(u * 2 * pif) * r, v * h}));
-            tree->norm.push_back(normalize(tree->pos.back() - c));
-            tree->texcoord.push_back({u, v});
-
-            if (i != 16 && j != 16)
-                tree->quads.push_back(
-                        {points + i * (16 + 1) + j, points + (i + 1) * (16 + 1) + j,
-                         points + (i + 1) * (16 + 1) + j + 1, points + i * (16 + 1) + j + 1});
-        }
-}
-
 frame3f compute_frame(const vec3f pos, const vec3f& tangent, const frame3f& pframe)
 {
     auto b = cross(tangent, pframe.z);
@@ -259,20 +232,21 @@ shape* draw_tree(float D, const vector<vec3f> positions, const vector<int>& pare
         {
             auto pos = positions[j];
             auto tangent = normalize(positions[child] - positions[parents[j]]);
-            auto f = i != j ? compute_frame(pos, tangent, pframe)
-                            : make_frame_fromz(pos, tangent);
+            auto f = rad[j] != r0 ? compute_frame(pos, tangent, pframe)
+                                  : make_frame_fromz(pos, tangent);
 
             for (auto jj = 0; jj <= 16; jj++)
             {
                 auto u = (float) jj / 16;
 
-                shp->pos.push_back(transform_point(f, {sinf(u * 2 * pif) * rad[j], cosf(u * 2 * pif) * rad[j], 0}));
+                shp->pos.push_back(transform_point(f, {cosf(u * 2 * pif) * rad[j], sinf(u * 2 * pif) * rad[j], 0}));
                 shp->norm.push_back(normalize(shp->pos.back() - pos));
                 shp->texcoord.push_back({u, ii * D});
 
-                if (i != j && jj != 16)
+                if (rad[j] != r0 && jj)
                     shp->quads.push_back({ii * (16 + 1) + jj, (ii - 1) * (16 + 1) + jj,
-                                          (ii - 1) * (16 + 1) + jj + 1, ii * (16 + 1) + jj + 1});
+                                          (ii - 1) * (16 + 1) + jj - 1, ii * (16 + 1) + jj - 1});
+
             }
             ii++;
             if (children[j])
