@@ -1,6 +1,6 @@
 #include "yocto/yocto_gl.h"
 #include "yocto/yocto_gl.cpp"
-#include "voro++-0.4.6/src/voro++.hh"
+#include "voro++/src/voro++.hh"
 
 using namespace ygl;
 
