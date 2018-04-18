@@ -301,14 +301,22 @@ int main(int argc, char** argv)
     log_info("Saving model...");
 
     //Test scena
-    tree->mat = add_test_material(scn, test_material_type::matte_colored);
-    scn->shapes.push_back(tree);
-    auto inst = new instance{"tree", identity_frame3f, tree};
+//    tree->mat = add_test_material(scn, test_material_type::matte_colored);
+//    scn->shapes.push_back(tree);
+//    auto inst = new instance{"tree", identity_frame3f, tree};
+//    scn->instances.push_back(inst);
+      add_test_camera(scn, test_camera_type::cam3);
+      add_test_lights(scn, test_light_type::envlight);
+      add_test_instance(scn, test_shape_type::floor, test_material_type::matte_green, identity_frame3f);
+      add_test_environment(scn, test_environment_type::sky1, identity_frame3f);
+
+    auto s = load_scene("resources/lemon_leaf/LEAF.obj", load_options());
+
+    scn->shapes.push_back(s->shapes.back());
+    scn->materials.insert(scn->materials.end(), s->materials.begin(), s->materials.end());
+    scn->textures.insert(scn->textures.end(), s->textures.begin(), s->textures.end());
+    auto inst = new instance{"leave", identity_frame3f, s->shapes.front()};
     scn->instances.push_back(inst);
-    add_test_camera(scn, test_camera_type::cam3);
-    add_test_lights(scn, test_light_type::envlight);
-    add_test_instance(scn, test_shape_type::floor, test_material_type::matte_green, identity_frame3f);
-    add_test_environment(scn, test_environment_type::sky1, identity_frame3f);
 
     save_scene(path, scn, save_options());
 
