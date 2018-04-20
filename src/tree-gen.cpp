@@ -6,20 +6,21 @@ using namespace ygl;
 
 const auto e = 2.71828184f;     // esponente per sommatoria dei raggi
 const auto r0 = 0.01f;          // raggio iniziale
+const auto leaf_scale = 0.4f;
 const auto eps = 1e-16f;
 
 /* Genera in modo randomico i punti di attrazione e crea il
    diagramma di Voronoi */
 voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f& t0, const vec2f& t1)
 {
-    auto points = vector<vec3f>();
+    auto points = std::vector<vec3f>();
     auto bbox = bbox3f();
     auto rng = init_rng(time(nullptr));
 
     for (auto i = 0; i < N; i++)
     {
         auto y = next_rand1f(rng, p0.x, p1.x);
-        auto r = eval_bezier_cubic(p1, t1, t0, p0, y).y;
+        auto r = interpolate_bezier(p1, t1, t0, p0, y).y;
         auto p = sqrtf(next_rand1f(rng, 0, r * r));
         auto t = next_rand1f(rng, 0, 2 * pif);
 
@@ -39,9 +40,9 @@ voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f
 }
 
 void add_branch(vec3f node, int node_id, float di, float D, const voro::container& voro_attr,
-                const voro::container& voro_nodes, unordered_set<int>& dead_attr,
-                unordered_set<int>& computed_attr, unordered_set<int>& dead_nodes,
-                vector<pair<vec3f, int>>& new_nodes)
+                const voro::container& voro_nodes, std::unordered_set<int>& dead_attr,
+                std::unordered_set<int>& computed_attr, std::unordered_set<int>& dead_nodes,
+                std::vector<std::pair<vec3f, int>>& new_nodes)
 {
     auto attr_id = 0;
     auto x = 0.0, y = 0.0, z = 0.0, reder = 0.0;
@@ -82,7 +83,7 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
         dead_nodes.insert(node_id);
 }
 
-void kill_points(vec3f node, float  dk, const voro::container& voro_attr, unordered_set<int>& dead_attr)
+void kill_points(vec3f node, float  dk, const voro::container& voro_attr, std::unordered_set<int>& dead_attr)
 {
     auto attr_loop = voro::c_loop_subset(voro_attr);
     attr_loop.setup_sphere(node.x, node.y, node.z, dk, true);
@@ -99,28 +100,28 @@ void kill_points(vec3f node, float  dk, const voro::container& voro_attr, unorde
 }
 
 // Crescita dell'albero
-vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
-                   const voro::container& voro_attr, vector<int>& parents)
+std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
+                   const voro::container& voro_attr, std::vector<int>& parents)
 {
-    auto positions = vector<vec3f>();
-    parents = vector<int>();
+    auto positions = std::vector<vec3f>();
+    parents = std::vector<int>();
 
     positions.push_back({0, 0, 0});
     parents.push_back(0);
 
     auto attr_loop = voro::c_loop_subset(voro_attr);
 
-    auto voro_nodes = voro::container(voro_attr.ax, voro_attr.bx, min(voro_attr.ay, -eps), voro_attr.by,
+    auto voro_nodes = voro::container(voro_attr.ax, voro_attr.bx, min(voro_attr.ay, (double) -eps), voro_attr.by,
                                       voro_attr.az, voro_attr.bz, N / 5, N / 5, N / 5, false, false, false, 8);
     voro_nodes.put(0, 0.0f, 0.0f, 0.0f);
     auto nodes_loop = voro::c_loop_all(voro_nodes);
 
-    auto dead_attr = unordered_set<int>();
-    auto computed_attr = unordered_set<int>();
-    auto dead_nodes = unordered_set<int>();
-    auto new_nodes = vector<pair<vec3f, int>>();
+    auto dead_attr = std::unordered_set<int>();
+    auto computed_attr = std::unordered_set<int>();
+    auto dead_nodes = std::unordered_set<int>();
+    auto new_nodes = std::vector<std::pair<vec3f, int>>();
 
-    auto threads = vector<std::thread>();
+    auto threads = std::vector<std::thread>();
 
     auto node_id = 0, attr_id = 0;
     auto x = 0.0, y = 0.0, z = 0.0, reder = 0.0;
@@ -188,26 +189,43 @@ vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
     return positions;
 }
 
-frame3f compute_frame(const vec3f pos, const vec3f& tangent, const frame3f& pframe)
+void load_leaf(scene* scn, const std::string& name)
+{
+    auto leaf = load_scene("resources/lemon_leaf/LEAF.obj", load_options());
+    scn->shapes.push_back(leaf->shapes.front());
+    scn->shapes.back()->name = "leaf";
+    scn->materials.push_back(leaf->materials.front());
+
+    //auto s = scaling_frame3f({leaf_scale, leaf_scale, leaf_scale});
+    //auto t = translation_frame3f({.4, -.4, .4});
+
+    //for (auto i = 0; i < scn->shapes.back()->pos.size(); i++)
+    //{
+    //    scn->shapes.back()->pos[i] = rotation_mat3f({0, 1, 0}, pif) * transform_point(t, transform_point(s, scn->shapes.back()->pos[i]));
+    //    scn->shapes.back()->pos[i] = rotation_mat3f({0, 0, 1}, pif) * scn->shapes.back()->pos[i];
+    //}
+}
+
+inline frame3f compute_frame(const vec3f pos, const vec3f& tangent, const frame3f& pframe)
 {
     auto b = cross(tangent, pframe.z);
 
     if (!length(b))
-        return make_frame3_fromzx(pos, tangent, pframe.x);
+        return make_frame_fromzx(pos, tangent, pframe.x);
 
     b = normalize(b);
     auto t = acosf(dot(tangent, pframe.z));
 
-    return make_frame3_fromzx(pos, tangent, rotation_mat3f(b, t) * pframe.x);
+    return make_frame_fromzx(pos, tangent, transform_point(rotation_frame(b, t), pframe.x));
 }
 
 // Crea la shape dell'albero con i quad dei cilindri
-shape* draw_tree(float D, const vector<vec3f> positions, const vector<int>& parents)
+void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const std::vector<int>& parents)
 {
-    auto shp = new shape{"tree"};
+    auto tree = new shape{"tree"};
 
-    auto rad = vector<float>(positions.size(), 0.0f);
-    auto children = vector<int>(positions.size(), 0);
+    auto rad = std::vector<float>(positions.size(), 0.0f);
+    auto children = std::vector<int>(positions.size(), 0);
 
     for (auto i = (int) positions.size() - 1; i >= 0; i--)
     {
@@ -239,12 +257,12 @@ shape* draw_tree(float D, const vector<vec3f> positions, const vector<int>& pare
             {
                 auto u = (float) jj / 16;
 
-                shp->pos.push_back(transform_point(f, {cosf(u * 2 * pif) * rad[j], sinf(u * 2 * pif) * rad[j], 0}));
-                shp->norm.push_back(normalize(shp->pos.back() - pos));
-                shp->texcoord.push_back({u, ii * D});
+                tree->pos.push_back(transform_point(f, {cosf(u * 2 * pif) * rad[j], sinf(u * 2 * pif) * rad[j], 0}));
+                tree->norm.push_back(normalize(tree->pos.back() - pos));
+                tree->texcoord.push_back({u, ii * D});
 
                 if (rad[j] != r0 && jj)
-                    shp->quads.push_back({ii * (16 + 1) + jj, (ii - 1) * (16 + 1) + jj,
+                    tree->quads.push_back({ii * (16 + 1) + jj, (ii - 1) * (16 + 1) + jj,
                                           (ii - 1) * (16 + 1) + jj - 1, ii * (16 + 1) + jj - 1});
 
             }
@@ -259,7 +277,9 @@ shape* draw_tree(float D, const vector<vec3f> positions, const vector<int>& pare
         }
     }
 
-    return shp;
+    auto group = new shape_group{"tree", "", std::vector<shape*>()};
+    group->shapes.push_back(tree);
+    scn->shapes.push_back(group);
 }
 
 int main(int argc, char** argv)
@@ -291,31 +311,19 @@ int main(int argc, char** argv)
 
     log_info("Beginning tree generation...");
 
-    vector<int> par;
+    std::vector<int> par;
     auto pos = grow(iter_num, N, D, di, dk, vorodiag, par);
 
     log_info("Drawing tree...");
 
-    auto tree = draw_tree(D, pos, par);
+    load_leaf(scn, "");
+
+    draw_tree(scn, D, pos, par);
 
     log_info("Saving model...");
 
     //Test scena
-//    tree->mat = add_test_material(scn, test_material_type::matte_colored);
-//    scn->shapes.push_back(tree);
-//    auto inst = new instance{"tree", identity_frame3f, tree};
-//    scn->instances.push_back(inst);
-      add_test_camera(scn, test_camera_type::cam3);
-      add_test_lights(scn, test_light_type::envlight);
-      add_test_instance(scn, test_shape_type::floor, test_material_type::matte_green, identity_frame3f);
-      add_test_environment(scn, test_environment_type::sky1, identity_frame3f);
-
-    auto s = load_scene("resources/lemon_leaf/LEAF.obj", load_options());
-
-    scn->shapes.push_back(s->shapes.back());
-    scn->materials.insert(scn->materials.end(), s->materials.begin(), s->materials.end());
-    scn->textures.insert(scn->textures.end(), s->textures.begin(), s->textures.end());
-    auto inst = new instance{"leave", identity_frame3f, s->shapes.front()};
+    auto inst = new instance{"leaf_inst", identity_frame3f, scn->shapes.front()};
     scn->instances.push_back(inst);
 
     save_scene(path, scn, save_options());
