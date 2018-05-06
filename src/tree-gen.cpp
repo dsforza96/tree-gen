@@ -191,22 +191,23 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
 
 void load_leaf(scene* scn, const std::string& name)
 {
-    auto leaf = load_scene("resources/lemon_leaf/LEAF.obj", load_options());
+    auto leaf = load_scene("resources/lemon_leaf/source/LEAF.obj", load_options());
     scn->shapes.push_back(leaf->shapes.front());
     scn->shapes.back()->name = "leaf";
     scn->materials.push_back(leaf->materials.front());
+    scn->textures.push_back(leaf->textures.front());
 
-    //auto s = scaling_frame3f({leaf_scale, leaf_scale, leaf_scale});
+    auto s = scaling_frame(vec3f{leaf_scale, leaf_scale, leaf_scale});
     //auto t = translation_frame3f({.4, -.4, .4});
 
-    //for (auto i = 0; i < scn->shapes.back()->pos.size(); i++)
+    for (auto i = 0; i < scn->shapes.back()->shapes.back()->pos.size(); i++)
     //{
-    //    scn->shapes.back()->pos[i] = rotation_mat3f({0, 1, 0}, pif) * transform_point(t, transform_point(s, scn->shapes.back()->pos[i]));
+        scn->shapes.back()->shapes.back()->pos[i] = transform_point(s, scn->shapes.back()->shapes.back()->pos[i]);
     //    scn->shapes.back()->pos[i] = rotation_mat3f({0, 0, 1}, pif) * scn->shapes.back()->pos[i];
     //}
 }
 
-inline frame3f compute_frame(const vec3f pos, const vec3f& tangent, const frame3f& pframe)
+inline frame3f compute_frame(const vec3f& pos, const vec3f& tangent, const frame3f& pframe)
 {
     auto b = cross(tangent, pframe.z);
 
@@ -217,6 +218,16 @@ inline frame3f compute_frame(const vec3f pos, const vec3f& tangent, const frame3
     auto t = acosf(dot(tangent, pframe.z));
 
     return make_frame_fromzx(pos, tangent, transform_point(rotation_frame(b, t), pframe.x));
+}
+
+auto rng = init_rng(time(nullptr));
+
+void add_leaf(scene* scn, const vec3f& pos, const vec3f& ppos, const vec3f& norm)
+{
+    auto alpha = next_rand1f(rng);
+    auto o = alpha * pos + (1 - alpha) * ppos;
+    auto inst = new instance{"leaf", make_frame_fromz(o, norm), scn->shapes.front()};
+    scn->instances.push_back(inst);
 }
 
 // Crea la shape dell'albero con i quad dei cilindri
@@ -262,9 +273,12 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
                 tree->texcoord.push_back({u, ii * D});
 
                 if (rad[j] != r0 && jj)
+                {
                     tree->quads.push_back({ii * (16 + 1) + jj, (ii - 1) * (16 + 1) + jj,
-                                          (ii - 1) * (16 + 1) + jj - 1, ii * (16 + 1) + jj - 1});
+                                           (ii - 1) * (16 + 1) + jj - 1, ii * (16 + 1) + jj - 1});
 
+                    if (next_rand1f(rng) < 0.5f && rad[j] < 0.02f) add_leaf(scn, tree->pos.back(), tree->pos[(ii - 1) * (16 + 1) + jj], tree->norm.back());
+                }
             }
             ii++;
             if (children[j])
@@ -323,8 +337,11 @@ int main(int argc, char** argv)
     log_info("Saving model...");
 
     //Test scena
-    auto inst = new instance{"leaf_inst", identity_frame3f, scn->shapes.front()};
+    auto inst = new instance{"tree", identity_frame3f, scn->shapes.back()};
     scn->instances.push_back(inst);
+
+//    inst = new instance{"leaf", {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 0, 0}}, scn->shapes.front()};
+//    scn->instances.push_back(inst);
 
     save_scene(path, scn, save_options());
 
