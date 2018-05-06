@@ -189,22 +189,48 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
     return positions;
 }
 
-void load_leaf(scene* scn, const std::string& name)
-{
-    auto leaf = load_scene("resources/lemon_leaf/source/LEAF.obj", load_options());
-    scn->shapes.push_back(leaf->shapes.front());
-    scn->shapes.back()->name = "leaf";
-    scn->materials.push_back(leaf->materials.front());
-    scn->textures.push_back(leaf->textures.front());
-
-    auto s = scaling_frame(vec3f{leaf_scale, leaf_scale, leaf_scale});
-    //auto t = translation_frame3f({.4, -.4, .4});
-
-    for (auto i = 0; i < scn->shapes.back()->shapes.back()->pos.size(); i++)
-    //{
-        scn->shapes.back()->shapes.back()->pos[i] = transform_point(s, scn->shapes.back()->shapes.back()->pos[i]);
-    //    scn->shapes.back()->pos[i] = rotation_mat3f({0, 0, 1}, pif) * scn->shapes.back()->pos[i];
+void load_leaf(scene* scn, const std::string& name) {
+//    auto leaf = load_scene("resources/lemon_leaf/source/LEAF.obj", load_options());
+//    scn->shapes.push_back(leaf->shapes.front());
+//    scn->shapes.back()->name = "leaf";
+//    scn->materials.push_back(leaf->materials.front());
+//    scn->textures.push_back(leaf->textures.front());
+//
+//    auto s = scaling_frame(vec3f{leaf_scale, leaf_scale, leaf_scale});
+//    //auto t = translation_frame3f({.4, -.4, .4});
+//
+//    for (auto i = 0; i < scn->shapes.back()->shapes.back()->pos.size(); i++)
+//    //{
+//        scn->shapes.back()->shapes.back()->pos[i] = transform_point(s, scn->shapes.back()->shapes.back()->pos[i]);
+//    //    scn->shapes.back()->pos[i] = rotation_mat3f({0, 0, 1}, pif) * scn->shapes.back()->pos[i];
     //}
+    auto shp = new shape{"leaf"};
+    shp->pos.push_back({-0.1, 0, 0});
+    shp->pos.push_back({-0.1, 0, 0.6});
+    shp->pos.push_back({0.1, 0, 0.6});
+    shp->pos.push_back({0.1, 0, 0});
+    shp->quads.push_back({0, 1, 2, 3});
+    shp->norm.push_back({0, 1, 0});
+    shp->norm.push_back({0, 1, 0});
+    shp->norm.push_back({0, 1, 0});
+    shp->norm.push_back({0, 1, 0});
+    shp->texcoord.push_back({0, 1});
+    shp->texcoord.push_back({1, 1});
+    shp->texcoord.push_back({1, 0});
+    shp->texcoord.push_back({0, 0});
+
+    auto txt = new texture{"leaf", "leaf.png"};
+    txt->ldr = load_image4b(name);
+    scn->textures.push_back(txt);
+    auto mat = new material{"leaf", true};
+    mat->kd = {1, 1, 1};
+    mat->kd_txt = txt;
+    shp->mat = mat;
+    scn->materials.push_back(mat);
+
+    auto group = new shape_group{"leaf", "", std::vector<shape *>()};
+    group->shapes.push_back(shp);
+    scn->shapes.push_back(group);
 }
 
 inline frame3f compute_frame(const vec3f& pos, const vec3f& tangent, const frame3f& pframe)
@@ -234,6 +260,15 @@ void add_leaf(scene* scn, const vec3f& pos, const vec3f& ppos, const vec3f& norm
 void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const std::vector<int>& parents)
 {
     auto tree = new shape{"tree"};
+
+    auto txt = new texture{"bark", "bark.png"};
+    txt->ldr = load_image4b("resources/bark.png");
+    scn->textures.push_back(txt);
+    auto mat = new material{"bark", true};
+    mat->kd = {1, 1, 1};
+    mat->kd_txt = txt;
+    tree->mat = mat;
+    scn->materials.push_back(mat);
 
     auto rad = std::vector<float>(positions.size(), 0.0f);
     auto children = std::vector<int>(positions.size(), 0);
@@ -277,7 +312,8 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
                     tree->quads.push_back({ii * (16 + 1) + jj, (ii - 1) * (16 + 1) + jj,
                                            (ii - 1) * (16 + 1) + jj - 1, ii * (16 + 1) + jj - 1});
 
-                    if (next_rand1f(rng) < 0.5f && rad[j] < 0.02f) add_leaf(scn, tree->pos.back(), tree->pos[(ii - 1) * (16 + 1) + jj], tree->norm.back());
+                    if (rad[j] < 0.02f && next_rand1f(rng) < 0.2f)
+                        add_leaf(scn, tree->pos.back(), tree->pos[(ii - 1) * (16 + 1) + jj], tree->norm.back());
                 }
             }
             ii++;
@@ -330,7 +366,7 @@ int main(int argc, char** argv)
 
     log_info("Drawing tree...");
 
-    load_leaf(scn, "");
+    load_leaf(scn, "resources/leaf.png");
 
     draw_tree(scn, D, pos, par);
 
