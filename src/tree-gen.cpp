@@ -10,6 +10,12 @@ const auto leaf_threshold = 0.02f;
 const auto leaf_prob = 0.2f;
 const auto eps = 1e-16f;
 
+// Semafori per la mutua esclusione
+std::mutex mtx_dattr;
+std::mutex mtx_comp;
+std::mutex mtx_new;
+std::mutex mtx_dnode;
+
 /* Genera in modo randomico i punti di attrazione e crea il
    diagramma di Voronoi */
 voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f& t0, const vec2f& t1)
@@ -69,7 +75,9 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
             if (node_loop.start())
                 continue;
 
+            mtx_comp.lock();
             computed_attr.insert(attr_id);
+            mtx_comp.unlock();
 
             sum += normalize(attr - node);
             summed = true;
@@ -78,10 +86,16 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
     if (summed)
     {
         auto new_node = node + D * normalize(sum);
+        mtx_new.lock();
         new_nodes.push_back({new_node, node_id});
+        mtx_new.unlock();
     }
     else
+    {
+        mtx_dnode.lock();
         dead_nodes.insert(node_id);
+        mtx_dnode.unlock();
+    }
 }
 
 void kill_points(vec3f node, float  dk, const voro::container& voro_attr, std::unordered_set<int>& dead_attr)
@@ -96,7 +110,13 @@ void kill_points(vec3f node, float  dk, const voro::container& voro_attr, std::u
         do
         {
             attr_loop.pos(attr_id, x, y, z, reder);
+
+            if (dead_attr.count(attr_id))
+                continue;
+
+            mtx_dattr.lock();
             dead_attr.insert(attr_id);
+            mtx_dattr.unlock();
         } while (attr_loop.inc());
 }
 
@@ -156,8 +176,8 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
                 auto node = vec3f {(float) x, (float) y, (float) z};
 
                 threads.push_back(std::thread(add_branch, node, node_id, di, D,
-                                              std::ref(voro_attr), std::ref(voro_nodes), ref(dead_attr),
-                                              ref(computed_attr), ref(dead_nodes), ref(new_nodes)));
+                                              std::ref(voro_attr), std::ref(voro_nodes), std::ref(dead_attr),
+                                              std::ref(computed_attr), std::ref(dead_nodes), std::ref(new_nodes)));
             } while (nodes_loop.inc());
 
         for (auto& t : threads)
@@ -174,7 +194,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
             positions.push_back(new_node);
             parents.push_back(new_nodes.back().second);
 
-            threads.push_back(std::thread(kill_points, new_node, dk, std::ref(voro_attr), ref(dead_attr)));
+            threads.push_back(std::thread(kill_points, new_node, dk, std::ref(voro_attr), std::ref(dead_attr)));
 
             new_nodes.pop_back();
         }
@@ -210,7 +230,7 @@ void load_leaf(scene* scn, const std::string& name)
     shp->mat = mat;
     scn->materials.push_back(mat);
 
-    auto group = new shape_group{"leaf", "", std::vector<shape *>()};
+    auto group = new shape_group{"leaf", "", std::vector<shape*>()};
     group->shapes.push_back(shp);
     scn->shapes.push_back(group);
 }
