@@ -6,7 +6,8 @@ using namespace ygl;
 
 const auto e = 2.71828184f;     // esponente per sommatoria dei raggi
 const auto r0 = 0.01f;          // raggio iniziale
-const auto leaf_scale = 0.4f;
+const auto leaf_threshold = 0.02f;
+const auto leaf_prob = 0.2f;
 const auto eps = 1e-16f;
 
 /* Genera in modo randomico i punti di attrazione e crea il
@@ -189,35 +190,16 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
     return positions;
 }
 
-void load_leaf(scene* scn, const std::string& name) {
-//    auto leaf = load_scene("resources/lemon_leaf/source/LEAF.obj", load_options());
-//    scn->shapes.push_back(leaf->shapes.front());
-//    scn->shapes.back()->name = "leaf";
-//    scn->materials.push_back(leaf->materials.front());
-//    scn->textures.push_back(leaf->textures.front());
-//
-//    auto s = scaling_frame(vec3f{leaf_scale, leaf_scale, leaf_scale});
-//    //auto t = translation_frame3f({.4, -.4, .4});
-//
-//    for (auto i = 0; i < scn->shapes.back()->shapes.back()->pos.size(); i++)
-//    //{
-//        scn->shapes.back()->shapes.back()->pos[i] = transform_point(s, scn->shapes.back()->shapes.back()->pos[i]);
-//    //    scn->shapes.back()->pos[i] = rotation_mat3f({0, 0, 1}, pif) * scn->shapes.back()->pos[i];
-    //}
+void load_leaf(scene* scn, const std::string& name)
+{
     auto shp = new shape{"leaf"};
-    shp->pos.push_back({-0.1, 0, 0});
-    shp->pos.push_back({-0.1, 0, 0.6});
-    shp->pos.push_back({0.1, 0, 0.6});
-    shp->pos.push_back({0.1, 0, 0});
-    shp->quads.push_back({0, 1, 2, 3});
-    shp->norm.push_back({0, 1, 0});
-    shp->norm.push_back({0, 1, 0});
-    shp->norm.push_back({0, 1, 0});
-    shp->norm.push_back({0, 1, 0});
-    shp->texcoord.push_back({0, 1});
-    shp->texcoord.push_back({1, 1});
-    shp->texcoord.push_back({1, 0});
-    shp->texcoord.push_back({0, 0});
+
+    shp->pos = std::vector<vec3f>{{-0.1, 0, 0}, {-0.1, 0, 0.6}, {0.1, 0, 0.6}, {0.1, 0, 0},
+                                  {-0.1, -1e-4, 0}, {-0.1, -1e-4, 0.6}, {0.1, -1e-4, 0.6}, {0.1, -1e-4, 0}};
+    shp->quads = std::vector<vec4i>{{0, 1, 2, 3}, {4, 5, 6, 7}};
+    shp->norm = std::vector<vec3f>{{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0},
+                                   {0, -1, 0}, {0, -1, 0}, {0, -1, 0}, {0, -1, 0}};
+    shp->texcoord = std::vector<vec2f>{{0, 1}, {1, 1}, {1, 0}, {0, 0}, {0, 1}, {1, 1}, {1, 0}, {0, 0}};
 
     auto txt = new texture{"leaf", "leaf.png"};
     txt->ldr = load_image4b(name);
@@ -246,9 +228,7 @@ inline frame3f compute_frame(const vec3f& pos, const vec3f& tangent, const frame
     return make_frame_fromzx(pos, tangent, transform_point(rotation_frame(b, t), pframe.x));
 }
 
-auto rng = init_rng(time(nullptr));
-
-void add_leaf(scene* scn, const vec3f& pos, const vec3f& ppos, const vec3f& norm)
+inline void add_leaf(rng_pcg32& rng, scene* scn, const vec3f& pos, const vec3f& ppos, const vec3f& norm)
 {
     auto alpha = next_rand1f(rng);
     auto o = alpha * pos + (1 - alpha) * ppos;
@@ -281,6 +261,7 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
         children[parents[i]]++;
     }
 
+    auto rng = init_rng(time(nullptr));
     auto ii = 0;
 
     for (auto i = (int) positions.size() - 1; i > 0; i--)
@@ -312,8 +293,8 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
                     tree->quads.push_back({ii * (16 + 1) + jj, (ii - 1) * (16 + 1) + jj,
                                            (ii - 1) * (16 + 1) + jj - 1, ii * (16 + 1) + jj - 1});
 
-                    if (rad[j] < 0.02f && next_rand1f(rng) < 0.2f)
-                        add_leaf(scn, tree->pos.back(), tree->pos[(ii - 1) * (16 + 1) + jj], tree->norm.back());
+                    if (rad[j] < leaf_threshold && next_rand1f(rng) < leaf_prob)
+                        add_leaf(rng, scn, tree->pos.back(), tree->pos[(ii - 1) * (16 + 1) + jj], tree->norm.back());
                 }
             }
             ii++;
@@ -372,12 +353,8 @@ int main(int argc, char** argv)
 
     log_info("Saving model...");
 
-    //Test scena
     auto inst = new instance{"tree", identity_frame3f, scn->shapes.back()};
     scn->instances.push_back(inst);
-
-//    inst = new instance{"leaf", {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 0, 0}}, scn->shapes.front()};
-//    scn->instances.push_back(inst);
 
     save_scene(path, scn, save_options());
 
