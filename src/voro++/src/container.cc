@@ -122,6 +122,7 @@ void container::put(particle_order &vo,int n,double x,double y,double z) {
 	}
 }
 
+
 /** Put a particle into the correct region of the container, also recording
  * into which region it was stored.
  * \param[in] vo the ordering class in which to record the region.

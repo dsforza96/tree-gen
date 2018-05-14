@@ -8,7 +8,7 @@ const auto e = 2.71828184f;     // esponente per sommatoria dei raggi
 const auto r0 = 0.01f;          // raggio iniziale
 const auto leaf_threshold = 0.02f;
 const auto leaf_prob = 0.2f;
-const auto eps = 1e-16f;
+const auto eps = 1e-4f;
 
 // Semafori per la mutua esclusione
 std::mutex mtx_dattr;
@@ -51,7 +51,7 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
                 std::unordered_set<int>& computed_attr, std::unordered_set<int>& dead_nodes,
                 std::vector<std::pair<vec3f, int>>& new_nodes)
 {
-    auto attr_id = 0;
+    auto attr_id = 0, near_id = 0;
     auto x = 0.0, y = 0.0, z = 0.0, reder = 0.0;
 
     auto node_loop = voro::c_loop_subset(voro_nodes);
@@ -71,8 +71,19 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
 
             auto attr = vec3f{(float) x, (float) y, (float) z};
 
-            node_loop.setup_sphere(x, y, z, length(attr - node) - eps, true);
+            auto skip = false;
+            auto r = length(attr - node) + eps;
+            node_loop.setup_sphere(x, y, z, r, true);
+
             if (node_loop.start())
+                do
+                {
+                    node_loop.pos(near_id, x, y, z, reder);
+                if (near_id != node_id)
+                    skip = length(attr - vec3f{(float) x, (float) y, (float) z}) < r;
+                }while(node_loop.inc());
+
+            if(skip)
                 continue;
 
             mtx_comp.lock();
@@ -120,14 +131,21 @@ void kill_points(vec3f node, float  dk, const voro::container& voro_attr, std::u
         } while (attr_loop.inc());
 }
 
+inline bool contains(const voro::container& voro, const vec3f& p)
+{
+    return p.x >= voro.ax && p.x <= voro.bx && p.y >= voro.ay && p.y <= voro.by && p.z >= voro.az && p.z <= voro.bz;
+}
+
 // Crescita dell'albero
 std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
                    const voro::container& voro_attr, std::vector<int>& parents)
 {
     auto positions = std::vector<vec3f>();
+    auto positions_set = std::unordered_set<vec3f>();
     parents = std::vector<int>();
 
     positions.push_back({0, 0, 0});
+    positions_set.insert({0, 0, 0});
     parents.push_back(0);
 
     auto attr_loop = voro::c_loop_subset(voro_attr);
@@ -190,11 +208,19 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
         while (!new_nodes.empty())
         {
             auto new_node = new_nodes.back().first;
-            voro_nodes.put(positions.size(), new_node.x, new_node.y, new_node.z);
-            positions.push_back(new_node);
-            parents.push_back(new_nodes.back().second);
+            auto par_node = new_nodes.back().second;
 
-            threads.push_back(std::thread(kill_points, new_node, dk, std::ref(voro_attr), std::ref(dead_attr)));
+            if (contains(voro_nodes, new_node) && !positions_set.count(new_node))
+            {
+                voro_nodes.put(positions_set.size(), new_node.x, new_node.y, new_node.z);
+                positions.push_back(new_node);
+                positions_set.insert(new_node);
+                parents.push_back(par_node);
+
+                threads.push_back(std::thread(kill_points, new_node, dk, std::ref(voro_attr), std::ref(dead_attr)));
+            }
+            else
+                dead_nodes.insert(par_node);
 
             new_nodes.pop_back();
         }
@@ -204,7 +230,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
         threads.clear();
 
         if (i % 10 == 9 || !i)
-            log_info("{} nodes added after {} iterations...", positions.size(), i + 1);
+            log_info("{} nodes added after {} iterations...", positions_set.size(), i + 1);
     }
 
     return positions;
@@ -215,7 +241,7 @@ void load_leaf(scene* scn, const std::string& name)
     auto shp = new shape{"leaf"};
 
     shp->pos = std::vector<vec3f>{{-0.1, 0, 0}, {-0.1, 0, 0.6}, {0.1, 0, 0.6}, {0.1, 0, 0},
-                                  {-0.1, -1e-4, 0}, {-0.1, -1e-4, 0.6}, {0.1, -1e-4, 0.6}, {0.1, -1e-4, 0}};
+                                  {-0.1, -eps, 0}, {-0.1, -eps, 0.6}, {0.1, -eps, 0.6}, {0.1, -eps, 0}};
     shp->quads = std::vector<vec4i>{{0, 1, 2, 3}, {4, 5, 6, 7}};
     shp->norm = std::vector<vec3f>{{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0},
                                    {0, -1, 0}, {0, -1, 0}, {0, -1, 0}, {0, -1, 0}};
@@ -252,7 +278,8 @@ inline void add_leaf(rng_pcg32& rng, scene* scn, const vec3f& pos, const vec3f& 
 {
     auto alpha = next_rand1f(rng);
     auto o = alpha * pos + (1 - alpha) * ppos;
-    auto inst = new instance{"leaf", make_frame_fromz(o, norm), scn->shapes.front()};
+    auto inst = new instance{"leaf_" + std::to_string(scn->instances.size()),
+                             make_frame_fromz(o, norm), scn->shapes.front()};
     scn->instances.push_back(inst);
 }
 
