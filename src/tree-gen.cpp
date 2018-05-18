@@ -1,5 +1,4 @@
 #include "yocto/yocto_gl.h"
-#include "yocto/yocto_gl.cpp"
 #include "voro++/src/voro++.hh"
 
 using namespace ygl;
@@ -15,6 +14,25 @@ std::mutex mtx_dattr;
 std::mutex mtx_comp;
 std::mutex mtx_new;
 std::mutex mtx_dnode;
+
+enum struct crown_shape
+{
+    CYLINDRICAL = 0,
+    CONICAL = 1,
+    BEZIER = 2,
+};
+
+void mkdir(const std::string& dir)
+{
+    #ifndef _MSC_VER
+        auto e = system(("mkdir -p " + dir).c_str());
+    #else
+        auto fdir = dir;
+        for (auto& c : fdir)
+            if (c == '/') c = '\\';
+        auto e = system(("mkdir " + fdir).c_str());
+    #endif
+}
 
 /* Genera in modo randomico i punti di attrazione e crea il
    diagramma di Voronoi */
@@ -212,7 +230,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
 
             if (contains(voro_nodes, new_node) && !positions_set.count(new_node))
             {
-                voro_nodes.put(positions_set.size(), new_node.x, new_node.y, new_node.z);
+                voro_nodes.put(positions.size(), new_node.x, new_node.y, new_node.z);
                 positions.push_back(new_node);
                 positions_set.insert(new_node);
                 parents.push_back(par_node);
@@ -302,6 +320,9 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
 
     for (auto i = (int) positions.size() - 1; i >= 0; i--)
     {
+        if (!rad[i])
+            children[i] = -1;
+
         rad[i] = rad[i] ? pow(rad[i], 1 / e) : r0;
         rad[parents[i]] += pow(rad[i], e);
 
@@ -313,7 +334,7 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
 
     for (auto i = (int) positions.size() - 1; i > 0; i--)
     {
-        if (rad[i] != r0)
+        if (children[i] >= 0)   // Se il nodo non e' una foglia saltalo
             continue;
 
         auto child = i;
@@ -324,7 +345,7 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
         {
             auto pos = positions[j];
             auto tangent = normalize(positions[child] - positions[parents[j]]);
-            auto f = rad[j] != r0 ? compute_frame(pos, tangent, pframe)
+            auto f = children[j] < 0 ? compute_frame(pos, tangent, pframe)
                                   : make_frame_fromz(pos, tangent);
 
             for (auto jj = 0; jj <= 16; jj++)
@@ -335,17 +356,17 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
                 tree->norm.push_back(normalize(tree->pos.back() - pos));
                 tree->texcoord.push_back({u, ii * D});
 
-                if (rad[j] != r0 && jj)
+                if (children[j] >= 0 && jj)     // Se il nodo e' una foglia non aggiungere i quad
                 {
                     tree->quads.push_back({ii * (16 + 1) + jj, (ii - 1) * (16 + 1) + jj,
                                            (ii - 1) * (16 + 1) + jj - 1, ii * (16 + 1) + jj - 1});
 
-                    if (rad[j] < leaf_threshold && next_rand1f(rng) < leaf_prob)
-                        add_leaf(rng, scn, tree->pos.back(), tree->pos[(ii - 1) * (16 + 1) + jj], tree->norm.back());
+//                    if (rad[j] < leaf_threshold && next_rand1f(rng) < leaf_prob)
+//                        add_leaf(rng, scn, tree->pos.back(), tree->pos[(ii - 1) * (16 + 1) + jj], tree->norm.back());
                 }
             }
             ii++;
-            if (children[j])
+            if (children[j] > 0)    // Prosegui solo se e' l'ultima volta che visiti il nodo
                 break;
 
             children[parents[j]]--;
@@ -368,7 +389,8 @@ int main(int argc, char** argv)
     auto di = parse_opt(parser, "--influence-radius", "-di", "Radius of influence, equals <val> * D", 17) * D;
     auto dk = parse_opt(parser, "--kill-distance", "-dk", "Kill distance, equals <val> * D", 2) * D;
     auto iter_num = parse_opt(parser, "--iter-num", "-i", "Number of iterations", 100);
-    auto path = parse_opt(parser, "--output", "-o", "Output file", "out/out.obj"s);
+    auto path = parse_opt(parser, "--output", "-o", "Output directory", "out/"s);
+    //auto crown = parse_arg(parser, "crown shape", "Crown's shape", , true, );
 
     if (parser._usage || should_exit(parser))
     {
@@ -378,7 +400,7 @@ int main(int argc, char** argv)
 
     auto scn = new scene();
 
-    auto p0 = vec2f{2, 6};
+    auto p0 = vec2f{3, 6};
     auto p1 = vec2f{10, 6};
     auto t0 = vec2f{11, 6};
     auto t1 = vec2f{11, 6};
@@ -403,7 +425,8 @@ int main(int argc, char** argv)
     auto inst = new instance{"tree", identity_frame3f, scn->shapes.back()};
     scn->instances.push_back(inst);
 
-    save_scene(path, scn, save_options());
+    mkdir(path);
+    save_scene(path + "/tree.obj", scn, save_options());
 
     return 0;
 }
