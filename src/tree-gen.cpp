@@ -6,6 +6,7 @@ using namespace ygl;
 const auto e = 2.71828184f;     // esponente per sommatoria dei raggi
 const auto r0 = 0.01f;          // raggio iniziale
 const auto leaf_threshold = r0 * 2;
+const auto tree_leaf_ratio = 100;
 const auto eps = 1e-4f;
 
 // Semafori per la mutua esclusione
@@ -13,13 +14,6 @@ std::mutex mtx_dattr;
 std::mutex mtx_comp;
 std::mutex mtx_new;
 std::mutex mtx_dnode;
-
-enum struct crown_shape
-{
-    CYLINDRICAL = 0,
-    CONICAL = 1,
-    BEZIER = 2,
-};
 
 void mkdir(const std::string& dir)
 {
@@ -44,7 +38,7 @@ voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f
     for (auto i = 0; i < N; i++)
     {
         auto y = next_rand1f(rng, p0.x, p1.x);
-        auto r = interpolate_bezier(p1, t1, t0, p0, y).y;
+        auto r = interpolate_bezier(p0, t0, t1, p1, (y - p0.x) / (p1.x - p0.x)).y;
         auto p = sqrtf(next_rand1f(rng, 0, r * r));
         auto t = next_rand1f(rng, 0, 2 * pif);
 
@@ -282,7 +276,7 @@ void load_leaf(scene* scn, float scale)
     scn->shapes.push_back(group);
 }
 
-inline frame3f compute_frame(const vec3f& pos, const vec3f& tangent, const frame3f& pframe)
+inline frame3f parallel_trans_frame(const vec3f &pos, const vec3f &tangent, const frame3f &pframe)
 {
     auto b = cross(tangent, pframe.z);
 
@@ -348,7 +342,7 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
         {
             auto pos = positions[j];
             auto tangent = normalize(positions[child] - positions[parents[j]]);
-            auto f = children[j] < 0 ? compute_frame(pos, tangent, pframe)
+            auto f = children[j] < 0 ? parallel_trans_frame(pos, tangent, pframe)
                                   : make_frame_fromz(pos, tangent);
 
             for (auto jj = 0; jj <= 16; jj++)
@@ -382,6 +376,10 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
     auto group = new shape_group{"tree", "", std::vector<shape*>()};
     group->shapes.push_back(tree);
     scn->shapes.push_back(group);
+
+    auto inst = new instance{"tree", identity_frame3f, scn->shapes.back()};
+    scn->instances.push_back(inst);
+
 }
 
 int main(int argc, char** argv)
@@ -392,8 +390,36 @@ int main(int argc, char** argv)
     auto di = parse_opt(parser, "--influence-radius", "-di", "Radius of influence, equals <val> * D", 17) * D;
     auto dk = parse_opt(parser, "--kill-distance", "-dk", "Kill distance, equals <val> * D", 2) * D;
     auto iter_num = parse_opt(parser, "--iter-num", "-i", "Number of iterations", 100);
-    auto path = parse_opt(parser, "--output", "-o", "Output directory", "out/"s);
-    //auto crown = parse_arg(parser, "crown shape", "Crown's shape", , true, );
+    auto path = parse_opt(parser, "--output", "-o", "Output directory", "out"s);
+    auto make_scene = parse_flag(parser, "--make-scene", "-s", "Add camera and environment");
+    auto crown = parse_arg(parser, "crown shape", "Crown's shape", ""s, true, {"CONICAL", "CYLINDRICAL", "BEZIER"});
+
+    vec2f p0, p1, t0, t1;
+
+    if (crown == "CYLINDRICAL"s || crown == "CONICAL"s)
+    {
+        auto height = parse_arg(parser, "crown height", "Crown's height", 0.0f, true);
+        auto radius = parse_arg(parser, "crown radius", "Crown's radius", 0.0f, true);
+        auto trunk = parse_arg(parser, "trunk height", "Trunk's height", 0.0f, true);
+
+        p0 = {trunk, radius};
+        p1 = crown == "CYLINDRICAL"s
+             ? vec2f{trunk + height, radius}
+             : vec2f{trunk + height, 1};
+        t0 = p0;
+        t1 = p1;
+    }
+    else if (crown == "BEZIER"s)
+    {
+        p0.x = parse_arg(parser, "p0.x", "Bezier's spline 1st point", 0.0f, true);
+        p0.y = parse_arg(parser, "p0.y", "Bezier's spline 1st point", 0.0f, true);
+        t0.x = parse_arg(parser, "p1.x", "Bezier's spline 2nd point", 0.0f, true);
+        t0.y = parse_arg(parser, "p1.y", "Bezier's spline 2nd point", 0.0f, true);
+        t1.x = parse_arg(parser, "p2.x", "Bezier's spline 3rd point", 0.0f, true);
+        t1.y = parse_arg(parser, "p2.y", "Bezier's spline 3rd point", 0.0f, true);
+        p1.x = parse_arg(parser, "p3.x", "Bezier's spline 4th point", 0.0f, true);
+        p1.y = parse_arg(parser, "p3.y", "Bezier's spline 4th point", 0.0f, true);
+    }
 
     if (parser._usage || should_exit(parser))
     {
@@ -402,11 +428,6 @@ int main(int argc, char** argv)
     }
 
     auto scn = new scene();
-
-    auto p0 = vec2f{3, 6};
-    auto p1 = vec2f{10, 6};
-    auto t0 = vec2f{11, 6};
-    auto t1 = vec2f{11, 6};
 
     log_info("Generating attraction points...");
 
@@ -419,14 +440,28 @@ int main(int argc, char** argv)
 
     log_info("Drawing tree...");
 
-    load_leaf(scn, (p1.x - p0.x) / 50);
+    load_leaf(scn, p1.x / tree_leaf_ratio);
 
     draw_tree(scn, D, pos, par);
 
-    log_info("Saving model...");
+    if (make_scene)
+    {
+        log_info("Creating scene...");
 
-    auto inst = new instance{"tree", identity_frame3f, scn->shapes.back()};
-    scn->instances.push_back(inst);
+        auto sky = new texture{"sky", "sky.hdr"};
+        sky->hdr = make_sunsky_image(720, pif / 6);
+        scn->textures.push_back(sky);
+
+        auto env = new environment();
+        env->name = "sky";
+        env->ke = {1, 1, 1};
+        env->ke_txt = scn->textures.back();
+        scn->environments.push_back(env);
+
+        scn->cameras.push_back(make_view_camera(scn, 0));
+    }
+
+    log_info("Saving model...");
 
     mkdir(path);
     save_scene(path + "/tree.obj", scn, save_options());
