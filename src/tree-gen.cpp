@@ -5,8 +5,7 @@ using namespace ygl;
 
 const auto e = 2.71828184f;     // esponente per sommatoria dei raggi
 const auto r0 = 0.01f;          // raggio iniziale
-const auto leaf_threshold = 0.02f;
-const auto leaf_prob = 0.2f;
+const auto leaf_threshold = r0 * 2;
 const auto eps = 1e-4f;
 
 // Semafori per la mutua esclusione
@@ -254,19 +253,23 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
     return positions;
 }
 
-void load_leaf(scene* scn, const std::string& name)
+void load_leaf(scene* scn, float scale)
 {
     auto shp = new shape{"leaf"};
 
-    shp->pos = std::vector<vec3f>{{-0.1, 0, 0}, {-0.1, 0, 0.6}, {0.1, 0, 0.6}, {0.1, 0, 0},
-                                  {-0.1, -eps, 0}, {-0.1, -eps, 0.6}, {0.1, -eps, 0.6}, {0.1, -eps, 0}};
+    shp->pos = std::vector<vec3f>{{-0.5, 0, 0}, {-0.5, 0, 3}, {0.5, 0, 3}, {0.5, 0, 0},
+                                  {-1, -eps, 0}, {-1, -eps, 0.6}, {0.1, -eps, 0.6}, {0.1, -eps, 0}};
+
+    for (auto i = 0; i < 8; i++)
+        shp->pos[i] = shp->pos[i] * scale;
+
     shp->quads = std::vector<vec4i>{{0, 1, 2, 3}, {4, 5, 6, 7}};
     shp->norm = std::vector<vec3f>{{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0},
                                    {0, -1, 0}, {0, -1, 0}, {0, -1, 0}, {0, -1, 0}};
     shp->texcoord = std::vector<vec2f>{{0, 1}, {1, 1}, {1, 0}, {0, 0}, {0, 1}, {1, 1}, {1, 0}, {0, 0}};
 
     auto txt = new texture{"leaf", "leaf.png"};
-    txt->ldr = load_image4b(name);
+    txt->ldr = load_image4b("resources/leaf.png");
     scn->textures.push_back(txt);
     auto mat = new material{"leaf", true};
     mat->kd = {1, 1, 1};
@@ -361,8 +364,8 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
                     tree->quads.push_back({ii * (16 + 1) + jj, (ii - 1) * (16 + 1) + jj,
                                            (ii - 1) * (16 + 1) + jj - 1, ii * (16 + 1) + jj - 1});
 
-//                    if (rad[j] < leaf_threshold && next_rand1f(rng) < leaf_prob)
-//                        add_leaf(rng, scn, tree->pos.back(), tree->pos[(ii - 1) * (16 + 1) + jj], tree->norm.back());
+                    if (rad[j] < leaf_threshold && next_rand1f(rng) < D)
+                        add_leaf(rng, scn, tree->pos.back(), tree->pos[(ii - 1) * (16 + 1) + jj], tree->norm.back());
                 }
             }
             ii++;
@@ -416,7 +419,7 @@ int main(int argc, char** argv)
 
     log_info("Drawing tree...");
 
-    load_leaf(scn, "resources/leaf.png");
+    load_leaf(scn, (p1.x - p0.x) / 50);
 
     draw_tree(scn, D, pos, par);
 
