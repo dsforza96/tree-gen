@@ -170,6 +170,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
     auto computed_attr = std::unordered_set<int>();
     auto dead_nodes = std::unordered_set<int>();
     auto new_nodes = std::vector<std::pair<vec3f, int>>();
+    auto new_positions_set = std::unordered_set<vec3f>();
 
     auto threads = std::vector<std::thread>();
 
@@ -225,7 +226,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
             {
                 voro_nodes.put(positions.size(), new_node.x, new_node.y, new_node.z);
                 positions.push_back(new_node);
-                positions_set.insert(new_node);
+                new_positions_set.insert(new_node);
                 parents.push_back(par_node);
 
                 threads.push_back(std::thread(kill_points, new_node, dk, std::ref(voro_attr), std::ref(dead_attr)));
@@ -235,6 +236,10 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
 
             new_nodes.pop_back();
         }
+
+        positions_set.clear();
+        positions_set = new_positions_set;
+        new_positions_set.clear();
 
         for (auto& t : threads)
             t.join();
