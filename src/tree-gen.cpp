@@ -3,7 +3,7 @@
 
 using namespace ygl;
 
-const auto e = 2.71828184f;     // esponente per sommatoria dei raggi
+const auto e = 2.05f;     // esponente per sommatoria dei raggi
 const auto r0 = 0.01f;          // raggio iniziale
 const auto leaf_threshold = r0 * 2;
 const auto tree_leaf_ratio = 100;
@@ -287,7 +287,7 @@ inline frame3f parallel_trans_frame(const vec3f &pos, const vec3f &tangent, cons
 {
     auto b = cross(tangent, pframe.z);
 
-    if (!length(b))
+    if (length(b) < 0.01f)
         return make_frame_fromzx(pos, tangent, pframe.x);
 
     b = normalize(b);
