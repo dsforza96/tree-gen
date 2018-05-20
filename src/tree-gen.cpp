@@ -83,7 +83,7 @@ void add_branch(vec3f node, int node_id, float di, float D, const voro::containe
             auto attr = vec3f{(float) x, (float) y, (float) z};
 
             auto skip = false;
-            auto r = length(attr - node) + 1e-12;
+            auto r = length(attr - node) + 1e-12f;
             node_loop.setup_sphere(x, y, z, r, true);
 
             if (node_loop.start())
