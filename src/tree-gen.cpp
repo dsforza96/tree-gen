@@ -246,26 +246,30 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
         threads.clear();
 
         if (i % 10 == 9 || !i)
-            log_info("{} nodes added after {} iterations...", positions_set.size(), i + 1);
+            log_info("{} nodes added after {} iterations...", positions.size(), i + 1);
     }
 
     return positions;
 }
 
-void load_leaf(scene* scn, float scale)
+shape* load_leaf(scene* scn, float scale)
 {
     auto shp = new shape{"leaf"};
 
     shp->pos = std::vector<vec3f>{{-0.5, 0, 0}, {-0.5, 0, 3}, {0.5, 0, 3}, {0.5, 0, 0},
-                                  {-1, -eps, 0}, {-1, -eps, 0.6}, {0.1, -eps, 0.6}, {0.1, -eps, 0}};
+                                  {-0.5, 0, 0}, {-0.5, 0, 3}, {0.5, 0, 3}, {0.5, 0, 0}};
 
     for (auto i = 0; i < 8; i++)
+    {
         shp->pos[i] = shp->pos[i] * scale;
+        if (i > 3)
+            shp->pos[i] = shp->pos[i] - vec3f{0, eps, 0};
+    }
 
-    shp->quads = std::vector<vec4i>{{0, 1, 2, 3}, {4, 5, 6, 7}};
+    shp->quads = std::vector<vec4i>{{0, 1, 2, 3}, {7, 6, 5, 4}};
     shp->norm = std::vector<vec3f>{{0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0},
                                    {0, -1, 0}, {0, -1, 0}, {0, -1, 0}, {0, -1, 0}};
-    shp->texcoord = std::vector<vec2f>{{0, 1}, {1, 1}, {1, 0}, {0, 0}, {0, 1}, {1, 1}, {1, 0}, {0, 0}};
+    shp->texcoord = std::vector<vec2f>{{0, 1}, {1, 1}, {1, 0}, {0, 0},{0, 1}, {1, 1}, {1, 0}, {0, 0}};
 
     auto txt = new texture{"leaf", "leaf.png"};
     txt->ldr = load_image4b("resources/leaf.png");
@@ -276,9 +280,7 @@ void load_leaf(scene* scn, float scale)
     shp->mat = mat;
     scn->materials.push_back(mat);
 
-    auto group = new shape_group{"leaf", "", std::vector<shape*>()};
-    group->shapes.push_back(shp);
-    scn->shapes.push_back(group);
+    return shp;
 }
 
 inline frame3f parallel_trans_frame(const vec3f &pos, const vec3f &tangent, const frame3f &pframe)
@@ -294,17 +296,27 @@ inline frame3f parallel_trans_frame(const vec3f &pos, const vec3f &tangent, cons
     return make_frame_fromzx(pos, tangent, transform_point(rotation_frame(b, t), pframe.x));
 }
 
-inline void add_leaf(rng_pcg32& rng, scene* scn, const vec3f& pos, const vec3f& ppos, const vec3f& norm)
+inline void add_leaf(rng_pcg32& rng, scene* scn, const vec3f& pos, const vec3f& ppos, const vec3f& norm, const shape* shp)
 {
     auto alpha = next_rand1f(rng);
     auto o = alpha * pos + (1 - alpha) * ppos;
-    auto inst = new instance{"leaf_" + std::to_string(scn->instances.size()),
-                             make_frame_fromz(o, norm), scn->shapes.front()};
-    scn->instances.push_back(inst);
+    auto f = make_frame_fromz(o, norm);
+    auto leaf = new shape{"leaf_" + std::to_string(scn->shapes.front()->shapes.size())};
+
+    for (auto i = 0; i < 8; i++)
+    {
+        leaf->pos.push_back(transform_point(f, shp->pos[i]));
+        leaf->norm.push_back(i < 4 ? f.y : -f.y);
+    }
+    leaf->quads = shp->quads;
+    leaf->texcoord = shp->texcoord;
+    leaf->mat = shp->mat;
+
+    scn->shapes.front()->shapes.push_back(leaf);
 }
 
 // Crea la shape dell'albero con i quad dei cilindri
-void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const std::vector<int>& parents)
+void draw_tree(scene* scn, float D, const std::vector<vec3f>& positions, const std::vector<int>& parents, const shape* leaf)
 {
     auto tree = new shape{"tree"};
 
@@ -316,6 +328,9 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
     mat->kd_txt = txt;
     tree->mat = mat;
     scn->materials.push_back(mat);
+
+    auto group = new shape_group{"leaf", "", std::vector<shape*>()};
+    scn->shapes.push_back(group);
 
     auto rad = std::vector<float>(positions.size(), 0.0f);
     auto children = std::vector<int>(positions.size(), 0);
@@ -364,7 +379,7 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
                                            (ii - 1) * (16 + 1) + jj - 1, ii * (16 + 1) + jj - 1});
 
                     if (rad[j] < leaf_threshold && next_rand1f(rng) < D)
-                        add_leaf(rng, scn, tree->pos.back(), tree->pos[(ii - 1) * (16 + 1) + jj], tree->norm.back());
+                        add_leaf(rng, scn, tree->pos.back(), tree->pos[(ii - 1) * (16 + 1) + jj], tree->norm.back(), leaf);
                 }
             }
             ii++;
@@ -378,13 +393,9 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f> positions, const st
         }
     }
 
-    auto group = new shape_group{"tree", "", std::vector<shape*>()};
+    group = new shape_group{"tree", "", std::vector<shape*>()};
     group->shapes.push_back(tree);
     scn->shapes.push_back(group);
-
-    auto inst = new instance{"tree", identity_frame3f, scn->shapes.back()};
-    scn->instances.push_back(inst);
-
 }
 
 int main(int argc, char** argv)
@@ -445,13 +456,18 @@ int main(int argc, char** argv)
 
     log_info("Drawing tree...");
 
-    load_leaf(scn, p1.x / tree_leaf_ratio);
+    auto leaf = load_leaf(scn, p1.x / tree_leaf_ratio);
 
-    draw_tree(scn, D, pos, par);
+    draw_tree(scn, D, pos, par, leaf);
 
     if (make_scene)
     {
         log_info("Creating scene...");
+
+        auto inst = new instance{"tree", identity_frame3f, scn->shapes.back()};
+        scn->instances.push_back(inst);
+        inst = new instance{"leaf", identity_frame3f, scn->shapes.front()};
+        scn->instances.push_back(inst);
 
         auto sky = new texture{"sky", "sky.hdr"};
         sky->hdr = make_sunsky_image(720, pif / 6);
