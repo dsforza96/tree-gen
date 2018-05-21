@@ -409,6 +409,7 @@ int main(int argc, char** argv)
     auto path = parse_opt(parser, "--output", "-o", "Output directory", "out"s);
     auto make_scene = parse_flag(parser, "--make-scene", "-s", "Add camera and environment");
     auto crown = parse_arg(parser, "crown shape", "Crown's shape", ""s, true, {"CONICAL", "CYLINDRICAL", "BEZIER"});
+    auto trunk = parse_arg(parser, "trunk height", "Trunk's height", 0.0f, true);
 
     vec2f p0, p1, t0, t1;
 
@@ -416,7 +417,6 @@ int main(int argc, char** argv)
     {
         auto height = parse_arg(parser, "crown height", "Crown's height", 0.0f, true);
         auto radius = parse_arg(parser, "crown radius", "Crown's radius", 0.0f, true);
-        auto trunk = parse_arg(parser, "trunk height", "Trunk's height", 0.0f, true);
 
         p0 = {trunk, radius};
         p1 = crown == "CYLINDRICAL"s
@@ -427,13 +427,13 @@ int main(int argc, char** argv)
     }
     else if (crown == "BEZIER"s)
     {
-        p0.x = parse_arg(parser, "p0.x", "Bezier's spline 1st point", 0.0f, true);
+        p0.x = parse_arg(parser, "p0.x", "Bezier's spline 1st point", 0.0f, true) + trunk;
         p0.y = parse_arg(parser, "p0.y", "Bezier's spline 1st point", 0.0f, true);
-        t0.x = parse_arg(parser, "p1.x", "Bezier's spline 2nd point", 0.0f, true);
+        t0.x = parse_arg(parser, "p1.x", "Bezier's spline 2nd point", 0.0f, true) + trunk;
         t0.y = parse_arg(parser, "p1.y", "Bezier's spline 2nd point", 0.0f, true);
-        t1.x = parse_arg(parser, "p2.x", "Bezier's spline 3rd point", 0.0f, true);
+        t1.x = parse_arg(parser, "p2.x", "Bezier's spline 3rd point", 0.0f, true) + trunk;
         t1.y = parse_arg(parser, "p2.y", "Bezier's spline 3rd point", 0.0f, true);
-        p1.x = parse_arg(parser, "p3.x", "Bezier's spline 4th point", 0.0f, true);
+        p1.x = parse_arg(parser, "p3.x", "Bezier's spline 4th point", 0.0f, true) + trunk;
         p1.y = parse_arg(parser, "p3.y", "Bezier's spline 4th point", 0.0f, true);
     }
 
