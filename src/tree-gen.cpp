@@ -288,7 +288,7 @@ inline frame3f parallel_trans_frame(const vec3f &pos, const vec3f &tangent, cons
     auto b = cross(tangent, pframe.z);
 
     if (length(b) < 0.01f)
-        return make_frame_fromzx(pos, tangent, pframe.x);
+        return make_frame_fromzx(pos, pframe.z, pframe.x);
 
     b = normalize(b);
     auto t = acosf(dot(tangent, pframe.z));
@@ -357,19 +357,22 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f>& positions, const s
         auto child = i;
         auto pframe = frame3f();
         auto j = i;
+        auto break_next = false;
 
         while (child)
         {
             auto pos = positions[j];
             auto tangent = normalize(positions[child] - positions[parents[j]]);
-            auto f = children[j] < 0 ? parallel_trans_frame(pos, tangent, pframe)
-                                  : make_frame_fromz(pos, tangent);
+            auto f = children[j] >= 0 ? parallel_trans_frame(pos, tangent, pframe)
+                                      : make_frame_fromz(pos, tangent);
+
+            auto r = rad[j] - rad[child] > r0 ? rad[child] : rad[j];
 
             for (auto jj = 0; jj <= 16; jj++)
             {
                 auto u = (float) jj / 16;
 
-                tree->pos.push_back(transform_point(f, {cosf(u * 2 * pif) * rad[j], sinf(u * 2 * pif) * rad[j], 0}));
+                tree->pos.push_back(transform_point(f, {cosf(u * 2 * pif) * r, sinf(u * 2 * pif) * r, 0}));
                 tree->norm.push_back(normalize(tree->pos.back() - pos));
                 tree->texcoord.push_back({u, ii * D});
 
@@ -383,10 +386,14 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f>& positions, const s
                 }
             }
             ii++;
-            if (children[j] > 0)    // Prosegui solo se e' l'ultima volta che visiti il nodo
+            if (break_next)
                 break;
 
-            children[parents[j]]--;
+            if (children[j] > 0)    // Prosegui solo se e' l'ultima volta che visiti il nodo
+                break_next = true;  // Ma disegna comunque i quad al prossimo giro
+            else
+                children[parents[j]]--;
+
             child = j;
             pframe = f;
             j = parents[j];
