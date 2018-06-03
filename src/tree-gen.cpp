@@ -252,7 +252,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
     return positions;
 }
 
-shape* load_leaf(scene* scn, float scale)
+shape* load_leaf(scene* scn, const std::string& leaf_txt, float scale)
 {
     auto shp = new shape{"leaf"};
 
@@ -272,7 +272,7 @@ shape* load_leaf(scene* scn, float scale)
     shp->texcoord = std::vector<vec2f>{{0, 1}, {1, 1}, {1, 0}, {0, 0},{0, 1}, {1, 1}, {1, 0}, {0, 0}};
 
     auto txt = new texture{"leaf", "leaf.png"};
-    txt->ldr = load_image4b("resources/leaf.png");
+    txt->ldr = load_image4b(leaf_txt);
     scn->textures.push_back(txt);
     auto mat = new material{"leaf", true};
     mat->kd = {1, 1, 1};
@@ -413,6 +413,7 @@ int main(int argc, char** argv)
     auto di = parse_opt(parser, "--influence-radius", "-di", "Radius of influence, equals <val> * D", 17) * D;
     auto dk = parse_opt(parser, "--kill-distance", "-dk", "Kill distance, equals <val> * D", 2) * D;
     auto iter_num = parse_opt(parser, "--iter-num", "-i", "Number of iterations", 100);
+    auto leaf_txt = parse_opt(parser, "--leaf", "-l", "Leaves or flowers texture", "resources/leaf.png"s);
     auto path = parse_opt(parser, "--output", "-o", "Output directory", "out"s);
     auto make_scene = parse_flag(parser, "--make-scene", "-s", "Add camera and environment");
     auto crown = parse_arg(parser, "crown shape", "Crown's shape", ""s, true, {"CONICAL", "CYLINDRICAL", "BEZIER"});
@@ -463,7 +464,7 @@ int main(int argc, char** argv)
 
     log_info("Drawing tree...");
 
-    auto leaf = load_leaf(scn, p1.x / tree_leaf_ratio);
+    auto leaf = load_leaf(scn, leaf_txt, p1.x / tree_leaf_ratio);
 
     draw_tree(scn, D, pos, par, leaf);
 
