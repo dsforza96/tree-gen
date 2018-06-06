@@ -5,8 +5,8 @@ using namespace ygl;
 
 const auto e = 2.05f;     // esponente per sommatoria dei raggi
 const auto r0 = 0.01f;          // raggio iniziale
-const auto leaf_threshold = r0 * 2;
-const auto tree_leaf_ratio = 100;
+const auto leaf_threshold = r0 * 3;
+const auto tree_leaf_ratio = 35;
 const auto eps = 1e-4f;
 
 // Semafori per la mutua esclusione
@@ -256,8 +256,8 @@ shape* load_leaf(scene* scn, const std::string& leaf_txt, float scale)
 {
     auto shp = new shape{"leaf"};
 
-    shp->pos = std::vector<vec3f>{{-0.5, 0, 0}, {-0.5, 0, 3}, {0.5, 0, 3}, {0.5, 0, 0},
-                                  {-0.5, 0, 0}, {-0.5, 0, 3}, {0.5, 0, 3}, {0.5, 0, 0}};
+    shp->pos = std::vector<vec3f>{{-0.5, 0, 0}, {-0.5, 0, 1}, {0.5, 0, 1}, {0.5, 0, 0},
+                                  {-0.5, 0, 0}, {-0.5, 0, 1}, {0.5, 0, 1}, {0.5, 0, 0}};
 
     for (auto i = 0; i < 8; i++)
     {
@@ -283,6 +283,8 @@ shape* load_leaf(scene* scn, const std::string& leaf_txt, float scale)
     return shp;
 }
 
+// This implementation comes from the pseudocode in Andrew J. Hanson and Hui,
+// Parallel Transport Approach to Curve Framing (1995)
 inline frame3f parallel_trans_frame(const vec3f &pos, const vec3f &tangent, const frame3f &pframe)
 {
     auto b = cross(tangent, pframe.z);
@@ -415,13 +417,12 @@ int main(int argc, char** argv)
     auto iter_num = parse_opt(parser, "--iter-num", "-i", "Number of iterations", 100);
     auto leaf_txt = parse_opt(parser, "--leaf", "-l", "Leaves or flowers texture", "resources/leaf.png"s);
     auto path = parse_opt(parser, "--output", "-o", "Output directory", "out"s);
-    auto make_scene = parse_flag(parser, "--make-scene", "-s", "Add camera and environment");
-    auto crown = parse_arg(parser, "crown shape", "Crown's shape", ""s, true, {"CONICAL", "CYLINDRICAL", "BEZIER"});
+    auto crown = parse_arg(parser, "crown shape", "Crown's shape", ""s, true, {"CONE", "CYLINDER", "DOME", "BEZIER"});
     auto trunk = parse_arg(parser, "trunk height", "Trunk's height", 0.0f, true);
 
     vec2f p0, p1, t0, t1;
 
-    if (crown == "CYLINDRICAL"s || crown == "CONICAL"s)
+    if (crown == "CYLINDER"s || crown == "CONE"s)
     {
         auto height = parse_arg(parser, "crown height", "Crown's height", 0.0f, true);
         auto radius = parse_arg(parser, "crown radius", "Crown's radius", 0.0f, true);
@@ -432,6 +433,15 @@ int main(int argc, char** argv)
              : vec2f{trunk + height, 1};
         t0 = p0;
         t1 = p1;
+    }
+    else if (crown == "DOME"s)
+    {
+        auto radius = parse_arg(parser, "crown radius", "Crown's radius", 0.0f, true);
+
+        p0 = {trunk, radius};
+        p1 = {trunk + radius, 1};
+        t0 = {trunk + radius / 2, radius};
+        t1 = {trunk + radius, radius / 2};
     }
     else if (crown == "BEZIER"s)
     {
@@ -467,28 +477,6 @@ int main(int argc, char** argv)
     auto leaf = load_leaf(scn, leaf_txt, p1.x / tree_leaf_ratio);
 
     draw_tree(scn, D, pos, par, leaf);
-
-    if (make_scene)
-    {
-        log_info("Creating scene...");
-
-        auto inst = new instance{"tree", identity_frame3f, scn->shapes.back()};
-        scn->instances.push_back(inst);
-        inst = new instance{"leaf", identity_frame3f, scn->shapes.front()};
-        scn->instances.push_back(inst);
-
-        auto sky = new texture{"sky", "sky.hdr"};
-        sky->hdr = make_sunsky_image(720, pif / 6);
-        scn->textures.push_back(sky);
-
-        auto env = new environment();
-        env->name = "sky";
-        env->ke = {1, 1, 1};
-        env->ke_txt = scn->textures.back();
-        scn->environments.push_back(env);
-
-        scn->cameras.push_back(make_view_camera(scn, 0));
-    }
 
     log_info("Saving model...");
 
