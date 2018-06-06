@@ -3,8 +3,8 @@
 
 using namespace ygl;
 
-const auto e = 2.05f;     // esponente per sommatoria dei raggi
-const auto r0 = 0.01f;          // raggio iniziale
+const auto e = 2.05f;               // esponente per sommatoria dei raggi
+const auto r0 = 0.01f;              // raggio iniziale
 const auto leaf_threshold = r0 * 3;
 const auto tree_leaf_ratio = 35;
 const auto eps = 1e-4f;
@@ -27,8 +27,8 @@ void mkdir(const std::string& dir)
     #endif
 }
 
-/* Genera in modo randomico i punti di attrazione e crea il
-   diagramma di Voronoi */
+// Genera in modo randomico i punti di attrazione e crea il
+// diagramma di Voronoi
 voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f& t0, const vec2f& t1)
 {
     auto points = std::vector<vec3f>();
@@ -50,7 +50,6 @@ voro::container throw_darts(int N, const vec2f& p0, const vec2f& p1, const vec2f
     auto vorodiag = voro::container(bbox.min.x - eps, bbox.max.x + eps, bbox.min.y - eps, bbox.max.y + eps,
                                     bbox.min.z - eps, bbox.max.z + eps, N / 5, N / 5, N / 5, false, false, false, 8);
 
-    // aggiungo tutti i punti di attrazione
     for (auto i = 0; i < N; i++)
         vorodiag.put(i, points[i].x, points[i].y, points[i].z);
 
@@ -334,13 +333,14 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f>& positions, const s
     auto group = new shape_group{"leaf", "", std::vector<shape*>()};
     scn->shapes.push_back(group);
 
+    auto leaves = std::vector<int>();
     auto rad = std::vector<float>(positions.size(), 0.0f);
     auto children = std::vector<int>(positions.size(), 0);
 
     for (auto i = (int) positions.size() - 1; i >= 0; i--)
     {
         if (!rad[i])
-            children[i] = -1;
+            leaves.push_back(i);
 
         rad[i] = rad[i] ? pow(rad[i], 1 / e) : r0;
         rad[parents[i]] += pow(rad[i], e);
@@ -351,11 +351,8 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f>& positions, const s
     auto rng = init_rng(time(nullptr));
     auto ii = 0;
 
-    for (auto i = (int) positions.size() - 1; i > 0; i--)
+    for (auto i : leaves)
     {
-        if (children[i] >= 0)   // Se il nodo non e' una foglia saltalo
-            continue;
-
         auto child = i;
         auto pframe = frame3f();
         auto j = i;
@@ -365,8 +362,8 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f>& positions, const s
         {
             auto pos = positions[j];
             auto tangent = normalize(positions[child] - positions[parents[j]]);
-            auto f = children[j] >= 0 ? parallel_trans_frame(pos, tangent, pframe)
-                                      : make_frame_fromz(pos, tangent);
+            auto f = i == j ? make_frame_fromz(pos, tangent)
+                            : parallel_trans_frame(pos, tangent, pframe);
 
             auto r = rad[j] - rad[child] > r0 ? rad[child] : rad[j];
 
@@ -378,7 +375,7 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f>& positions, const s
                 tree->norm.push_back(normalize(tree->pos.back() - pos));
                 tree->texcoord.push_back({u, ii * D});
 
-                if (children[j] >= 0 && jj)     // Se il nodo e' una foglia non aggiungere i quad
+                if (i != j && jj)     // Se il nodo e' una foglia non aggiungere i quad
                 {
                     tree->quads.push_back({ii * (16 + 1) + jj, (ii - 1) * (16 + 1) + jj,
                                            (ii - 1) * (16 + 1) + jj - 1, ii * (16 + 1) + jj - 1});
@@ -392,7 +389,7 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f>& positions, const s
                 break;
 
             if (children[j] > 0)    // Prosegui solo se e' l'ultima volta che visiti il nodo
-                break_next = true;  // Ma disegna comunque i quad al prossimo giro
+                break_next = true;  // Ma disegna comunque i quad alla prossima iterazione
             else
                 children[parents[j]]--;
 
@@ -410,11 +407,11 @@ void draw_tree(scene* scn, float D, const std::vector<vec3f>& positions, const s
 int main(int argc, char** argv)
 {
     auto parser = make_parser(argc, argv, "tree-gen", "Generate a stochastic tree");
-    auto N = parse_opt(parser, "--attr-points", "-N", "Number of attraction points", 1200);
-    auto D = parse_opt(parser, "--distance", "-D", "Distance between two nodes", 1.0f);
-    auto di = parse_opt(parser, "--influence-radius", "-di", "Radius of influence, equals <val> * D", 17) * D;
-    auto dk = parse_opt(parser, "--kill-distance", "-dk", "Kill distance, equals <val> * D", 2) * D;
-    auto iter_num = parse_opt(parser, "--iter-num", "-i", "Number of iterations", 100);
+    auto N = parse_opt(parser, "--attr-points", "-N", "Number of attraction points", 500);
+    auto D = parse_opt(parser, "--distance", "-D", "Distance between two nodes", 0.1f);
+    auto di = parse_opt(parser, "--influence-radius", "-di", "Radius of influence, equals <val> * D", 25) * D;
+    auto dk = parse_opt(parser, "--kill-distance", "-dk", "Kill distance, equals <val> * D", 1) * D;
+    auto iter_num = parse_opt(parser, "--iter-num", "-i", "Number of iterations", 200);
     auto leaf_txt = parse_opt(parser, "--leaf", "-l", "Leaves or flowers texture", "resources/leaf.png"s);
     auto path = parse_opt(parser, "--output", "-o", "Output directory", "out"s);
     auto crown = parse_arg(parser, "crown shape", "Crown's shape", ""s, true, {"CONE", "CYLINDER", "DOME", "BEZIER"});
@@ -428,7 +425,7 @@ int main(int argc, char** argv)
         auto radius = parse_arg(parser, "crown radius", "Crown's radius", 0.0f, true);
 
         p0 = {trunk, radius};
-        p1 = crown == "CYLINDRICAL"s
+        p1 = crown == "CYLINDER"s
              ? vec2f{trunk + height, radius}
              : vec2f{trunk + height, 1};
         t0 = p0;
