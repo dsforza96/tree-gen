@@ -3,8 +3,8 @@
 
 using namespace ygl;
 
-const auto e = 2.05f;               // esponente per sommatoria dei raggi
-const auto r0 = 0.01f;              // raggio iniziale
+const auto e = 2.05f;               // Esponente per sommatoria dei raggi
+const auto r0 = 0.01f;              // Raggio iniziale
 const auto leaf_threshold = r0 * 3;
 const auto tree_leaf_ratio = 35;
 const auto eps = 1e-4f;
@@ -176,7 +176,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
     auto node_id = 0, attr_id = 0;
     auto x = 0.0, y = 0.0, z = 0.0, reder = 0.0;
 
-    // uccidi gli attraction points vicini alla radice
+    // Uccidi gli attraction points vicini alla radice
     attr_loop.setup_sphere(x, y, z, dk, true);
 
     if (attr_loop.start())
@@ -186,7 +186,7 @@ std::vector<vec3f> grow(int iter_num, int N, float D, float di, float dk,
             dead_attr.insert(attr_id);
         } while (attr_loop.inc());
 
-    // loop di crescita
+    // Loop di crescita
     for (auto i = 0; i < iter_num; i++)
     {
         if (dead_attr.size() == N)
