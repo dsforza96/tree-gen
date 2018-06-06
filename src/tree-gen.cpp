@@ -282,7 +282,7 @@ shape* load_leaf(scene* scn, const std::string& leaf_txt, float scale)
     return shp;
 }
 
-// This implementation comes from the pseudocode in Andrew J. Hanson and Hui,
+// This implementation comes from the pseudocode in Andrew J. Hanson and Hui Ma,
 // Parallel Transport Approach to Curve Framing (1995)
 inline frame3f parallel_trans_frame(const vec3f &pos, const vec3f &tangent, const frame3f &pframe)
 {
