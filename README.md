@@ -84,7 +84,7 @@ bin/tree-gen -di 50 -l resources/needle_leaf.png CONE 2 10 5
 ![Cypress](images/cypress.png)
 
 ```bash
-bin/tree-gen -N 1000  -di 50 -l resources/small_branch.png BEZIER 2 0 1 2 4.5 7 0.5 12 1
+bin/tree-gen -N 1000 -di 50 -l resources/small_branch.png BEZIER 2 0 1 2 4.5 7 0.5 12 1
 ```
 
 ## Authors
