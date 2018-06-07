@@ -10,6 +10,9 @@ Colonization Algorithm" by Runions, Lane and Prusinkiewicz; while the method to
 evaluate the parallel transport frame is taken from "Parallel Transport Approach
 to Curve Framing" by Hanson and Ma.
 
+The texture we have used to generate the models are all taken from the website
+[textures.com](https://textures.com).
+
 ## Implementation
 
 The basic input for the tool is the shape of the tree's crown and a number of
@@ -45,6 +48,7 @@ The following parameters can be used as inputs:
 - `-di float` to specify the radius of influence
 - `-dk float` to specify the kill distance
 - `-i int` to specify the max number of iterations
+- `-l path` to specify the leaves/flowers texture to use in the generation
 - `-o path` to specify the output directory
 - the crown shape can be chosen from the following options:
     - `CONE`: specifying the crown's height
@@ -53,13 +57,40 @@ The following parameters can be used as inputs:
     - `BEZIER`: specifying the four points which define the spline
 - the trunk's height, i.e. the distance between the root and the crown
 
-## Textures
+It is possible to display an help message using the `-h` parameter.
 
-The texture we have used to generate the models are all taken from the website
-[textures.com](https://textures.com).
+## Examples
+
+#### Simple Tree
+
+![Simple Tree](images/simple.png)
+
+![Detail from Simple Tree](images/simple_detail.png)
+
+```bash
+bin/tree-gen -N 800 DOME 2 6
+```
+
+#### Fir
+
+![Fir](images/fir.png)
+
+```bash
+bin/tree-gen -di 50 -l resources/needle_leaf.png CONE 2 10 5
+```
+
+#### Cypress
+
+![Cypress](images/cypress.png)
+
+```bash
+bin/tree-gen -N 1000  -di 50 -l resources/small_branch.png BEZIER 2 0 1 2 4.5 7 0.5 12 1
+```
 
 ## Authors
 
 [Manuel Prandini](https://github.com/ManuelPrandini)
+
 [Davide Sforza](https://github.com/dsforza96)
+
 [Giovanni Varricchione](https://github.com/giovannivarr)
