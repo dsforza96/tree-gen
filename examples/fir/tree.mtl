@@ -1,0 +1,14 @@
+newmtl leaf
+  illum 2
+  Kd 1 1 1
+  Ns 2e+16
+  Ni 1
+  map_Kd leaf.png
+
+newmtl bark
+  illum 2
+  Kd 1 1 1
+  Ns 2e+16
+  Ni 1
+  map_Kd bark.png
+
