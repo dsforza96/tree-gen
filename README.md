@@ -61,6 +61,8 @@ It is possible to display an help message using the `-h` parameter.
 
 ## Examples
 
+The models can be found at the following link: [sketchfab.com/dsforza](https://sketchfab.com/dsforza/collections/trees-from-space-colonization).
+
 #### Simple Tree
 
 ![Simple Tree](images/simple.png)
